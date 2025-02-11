@@ -55,7 +55,7 @@ network:
         enp0s3:
             dhcp4: true
         enp0s8:
-            addresses: [$servidor_i/24]
+            addresses: [$servidor_ip/24]
             nameservers:
               addresses: [8.8.8.8, 1.1.1.1]
     version: 2
