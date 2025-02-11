@@ -41,6 +41,8 @@ IFS='.' read -r seg1 seg2 seg3 seg4 <<< "$servidor_ip"
 ip_invertida="${seg3}.${seg2}.${seg1}"
 ultimo_octeto="$seg4"
 
+sudo su
+
 # Configurar red con Netplan
 sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<EOT
 # This file is generated from information provided by the datasource.  Changes
@@ -114,9 +116,9 @@ zone "$ip_invertida.in-addr.arpa" {
 EOT
 
 #Copio el archivo db.127 y le pongo db.nombre de la ip
-cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
+cp /etc/bind/db.127 /etc/bind/db.${reverse_ip}
 #Me meto a ese archivo que copie 
-sudo bash -c "cat > /etc/bind/db.${ip_invertida} <<EOT
+sudo tee /etc/bind/db.${ip_invertida} > /dev/null <<EOT
 ;
 ; BIND reverse data file for local loopback interface
 ;
@@ -130,7 +132,8 @@ sudo bash -c "cat > /etc/bind/db.${ip_invertida} <<EOT
 ;
 @	IN	NS	$dominio.
 $ultimo_octeto	IN	PTR	$dominio.
-EOT"
+EOT
+
 
 # Crear archivo de zona directa
 cp /etc/bind/db.local /etc/bind/db.$dominio
