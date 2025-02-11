@@ -41,8 +41,6 @@ IFS='.' read -r seg1 seg2 seg3 seg4 <<< "$servidor_ip"
 ip_invertida="${seg3}.${seg2}.${seg1}"
 ultimo_octeto="$seg4"
 
-sudo su
-
 # Configurar red con Netplan
 sudo tee /etc/netplan/50-cloud-init.yaml > /dev/null <<EOT
 # This file is generated from information provided by the datasource.  Changes
