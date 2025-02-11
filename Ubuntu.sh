@@ -65,7 +65,7 @@ EOT
 sudo netplan apply
 
 # Instalar BIND9
-sudo apt update && sudo apt install -y bind9 bind9utils bind9-doc
+sudo apt-get update && sudo apt-get install -y bind9 bind9utils bind9-doc
 
 # Configurar BIND9 (archivo de opciones)
 cd /etc/bind
