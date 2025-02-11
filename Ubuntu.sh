@@ -1,58 +1,140 @@
 #!/bin/bash
 
-# Función para validar una dirección IP
-Validar-IP() { 
-    local ip_address=$1 
-    local valid_format="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-
-    if [[ $ip_address =~ $valid_format ]]; then 
-        return 0 
-    else 
-        return 1 
-    fi 
-} 
-
-# Función para validar un dominio (que termine en .com y tenga una estructura válida)
-Validar-Dominio() { 
-    local domain=$1 
-    local valid_format="^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$"
-
-    if [[ $domain =~ $valid_format ]] && [[ $domain == *.com ]]; then 
-        return 0 
-    else 
-        return 1 
-    fi 
+# Función para verificar si una IP es válida
+verificar_ip() {
+    local ip=$1
+    local regex="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+    
+    [[ $ip =~ $regex ]]
 }
 
-# Solicitar la dirección IP del servidor DNS 
-while true; do 
-    read -p "Ingrese la dirección IP del servidor DNS: " ip_address 
-    if Validar-IP "$ip_address"; then 
-        echo "¡Dirección IP válida ingresada: $ip_address!" 
-        break 
-    else 
-        echo "La dirección IP ingresada no es válida. Por favor, inténtelo nuevamente." 
-    fi 
-done 
+# Función para validar un dominio (solo .com)
+verificar_dominio() {
+    local dom=$1
+    local regex="^[a-zA-Z0-9.-]+\.com$"
 
-# Solicitar el dominio
-while true; do 
-    read -p "Ingrese el dominio: " domain 
-    if Validar-Dominio "$domain"; then 
-        echo "¡Dominio válido ingresado: $domain!" 
-        break 
-    else 
-        echo "El dominio ingresado no es válido o no termina con '.com'. Por favor, inténtelo nuevamente." 
-    fi 
-done 
+    [[ $dom =~ $regex ]]
+}
 
-# Separar la IP en sus cuatro octetos y generar la versión inversa
-IFS='.' read -r o1 o2 o3 o4 <<< "$ip_address"
-reverse_ip="${o3}.${o2}.${o1}"
-last_octet="$o4"
+# Pedir IP al usuario
+while true; do
+    read -p "Ingrese la dirección IP del servidor: " servidor_ip
+    if verificar_ip "$servidor_ip"; then
+        echo "IP válida: $servidor_ip"
+        break
+    else
+        echo "Error: IP inválida. Intente nuevamente."
+    fi
+done
 
-# Mostrar los valores generados
-echo "Octetos: $o1, $o2, $o3, $o4"
-echo "IP invertida: $reverse_ip"
-echo "Último octeto: $last_octet"
+# Pedir dominio al usuario
+while true; do
+    read -p "Ingrese el dominio (debe terminar en .com): " dominio
+    if verificar_dominio "$dominio"; then
+        echo "Dominio válido: $dominio"
+        break
+    else
+        echo "Error: Dominio inválido. Intente nuevamente."
+    fi
+done
+
+# Extraer segmentos de la IP para la configuración inversa
+IFS='.' read -r seg1 seg2 seg3 seg4 <<< "$servidor_ip"
+ip_invertida="${seg3}.${seg2}.${seg1}"
+ultimo_octeto="$seg4"
+
+# Configurar red con Netplan
+sudo bash -c "cat > /etc/netplan/01-config.yaml" <<EOT
+network:
+    ethernets:
+        enp0s3:
+            dhcp4: true
+        enp0s8:
+            addresses: [$servidor_ip/24]
+            nameservers:
+              addresses: [8.8.8.8, 1.1.1.1]
+    version: 2
+EOT
+
+# Aplicar configuración de red
+sudo netplan apply
+
+# Instalar BIND9
+sudo apt update && sudo apt install -y bind9 bind9utils bind9-doc
+
+# Configurar BIND9 (archivo de opciones)
+sudo bash -c "cat > /etc/bind/named.conf.options" <<EOT
+options {
+    directory "/var/cache/bind";
+    forwarders {
+        8.8.8.8;
+    };
+    dnssec-validation auto;
+    listen-on-v6 { any; };
+};
+EOT
+
+# Configurar BIND9 (archivo de zonas)
+sudo bash -c "cat > /etc/bind/named.conf.local" <<EOT
+zone "$dominio" {
+    type master;
+    file "/etc/bind/db.$dominio";
+};
+
+zone "$ip_invertida.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.$ip_invertida";
+};
+EOT
+
+# Crear archivo de zona inversa
+cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
+
+sudo bash -c "cat > /etc/bind/db.${ip_invertida}" <<EOT
+\$TTL 604800
+@   IN  SOA $dominio. root.$dominio. (
+        1       ; Serial
+        604800  ; Refresh
+        86400   ; Retry
+        2419200 ; Expire
+        604800 ) ; Negative Cache TTL
+;
+@   IN  NS  $dominio.
+$ultimo_octeto  IN  PTR  $dominio.
+EOT
+
+# Crear archivo de zona directa
+cp /etc/bind/db.local /etc/bind/db.$dominio
+
+sudo bash -c "cat > /etc/bind/db.$dominio" <<EOT
+\$TTL 604800
+@   IN  SOA $dominio. root.$dominio. (
+        2       ; Serial
+        604800  ; Refresh
+        86400   ; Retry
+        2419200 ; Expire
+        604800 ) ; Negative Cache TTL
+;
+@   IN  NS  $dominio.
+@   IN  A   $servidor_ip
+www IN  CNAME $dominio.
+EOT
+
+# Configurar resolv.conf
+sudo bash -c "cat > /etc/resolv.conf" <<EOT
+search $dominio.
+domain $dominio.
+nameserver $servidor_ip
+options edns0 trust-ad
+EOT
+
+# Reiniciar servicio de BIND9
+sudo systemctl restart bind9
+sudo systemctl status bind9 --no-pager
+
+# Realizar pruebas de resolución
+echo "Verificando configuración..."
+nslookup $dominio
+nslookup www.$dominio
+nslookup $servidor_ip
 
