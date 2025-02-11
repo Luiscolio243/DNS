@@ -131,7 +131,7 @@ sudo tee /etc/bind/db.${ip_invertida} > /dev/null <<EOT
 			 604800 )	; Negative Cache TTL
 ;
 @	IN	NS	$dominio.
-$ultimo_octecto	IN	PTR	$dominio.
+$ultimo_octeto	IN	PTR	$dominio.
 EOT
 
 # Crear archivo de zona directa
