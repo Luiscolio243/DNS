@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Función para verificar si una IP es válida
 verificar_ip() {
     local ip=$1
@@ -118,7 +116,7 @@ EOT
 #Copio el archivo db.127 y le pongo db.nombre de la ip
 cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
 #Me meto a ese archivo que copie 
-sudo tee /etc/bind/db.${ip_invertida} > /dev/null <<EOT
+sudo bash -c "cat > /etc/bind/db.${ip_invertida} <<EOT
 ;
 ; BIND reverse data file for local loopback interface
 ;
@@ -132,7 +130,7 @@ sudo tee /etc/bind/db.${ip_invertida} > /dev/null <<EOT
 ;
 @	IN	NS	$dominio.
 $ultimo_octeto	IN	PTR	$dominio.
-EOT
+EOT"
 
 # Crear archivo de zona directa
 cp /etc/bind/db.local /etc/bind/db.$dominio
