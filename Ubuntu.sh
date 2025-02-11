@@ -46,6 +46,7 @@ ultimo_octeto="$seg4"
 # Configurar red con Netplan
 sudo bash -c "cat > /etc/netplan/01-config.yaml" <<EOT
 network:
+    renderer: networkd
     ethernets:
         enp0s3:
             dhcp4: true
@@ -68,9 +69,11 @@ options {
     directory "/var/cache/bind";
     forwarders {
         8.8.8.8;
+        1.1.1.1;
     };
     dnssec-validation auto;
     listen-on-v6 { any; };
+    listen-on { any; };
 };
 EOT
 
@@ -88,7 +91,7 @@ zone "$ip_invertida.in-addr.arpa" {
 EOT
 
 # Crear archivo de zona inversa
-cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
+sudo cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
 
 sudo bash -c "cat > /etc/bind/db.${ip_invertida}" <<EOT
 \$TTL 604800
@@ -104,7 +107,7 @@ $ultimo_octeto  IN  PTR  $dominio.
 EOT
 
 # Crear archivo de zona directa
-cp /etc/bind/db.local /etc/bind/db.$dominio
+sudo cp /etc/bind/db.local /etc/bind/db.$dominio
 
 sudo bash -c "cat > /etc/bind/db.$dominio" <<EOT
 \$TTL 604800
@@ -120,21 +123,24 @@ sudo bash -c "cat > /etc/bind/db.$dominio" <<EOT
 www IN  CNAME $dominio.
 EOT
 
+# Asignar permisos correctos
+sudo chmod 644 /etc/bind/db.${ip_invertida}
+sudo chmod 644 /etc/bind/db.$dominio
+
 # Configurar resolv.conf
 sudo bash -c "cat > /etc/resolv.conf" <<EOT
-search $dominio.
-domain $dominio.
+search $dominio
 nameserver $servidor_ip
-options edns0 trust-ad
+options timeout:2 attempts:2 edns0 trust-ad
 EOT
 
 # Reiniciar servicio de BIND9
 sudo systemctl restart bind9
+sudo systemctl enable bind9
 sudo systemctl status bind9 --no-pager
 
-# Realizar pruebas de resolución
+# Verificar servicio de DNS
 echo "Verificando configuración..."
 nslookup $dominio
 nslookup www.$dominio
 nslookup $servidor_ip
-
