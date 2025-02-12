@@ -60,7 +60,7 @@ Add-DnsServerPrimaryZone -NetworkID "$segmentoTres.0/24" -ZoneFile "$ipReversa.d
 Get-DnsServerZone 
 
 # Agregar registros DNS
-Add-DnsServerResourceRecordA -Name "web" -ZoneName "$nombreDominio" -IPv4Address "$direccionIP" -TimeToLive 01:00:00 -CreatePtr -PassThru 
+Add-DnsServerResourceRecordA -Name "www" -ZoneName "$nombreDominio" -IPv4Address "$direccionIP" -TimeToLive 01:00:00 -CreatePtr -PassThru 
 Get-DnsServerResourceRecord -ZoneName "$nombreDominio" | Format-Table -AutoSize -Wrap 
 
 # Configurar cliente DNS
