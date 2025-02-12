@@ -114,7 +114,7 @@ zone "$ip_invertida.in-addr.arpa" {
 EOT
 
 #Copio el archivo db.127 y le pongo db.nombre de la ip
-cp /etc/bind/db.127 /etc/bind/db.${reverse_ip}
+cp /etc/bind/db.127 /etc/bind/db.${ip_invertida}
 #Me meto a ese archivo que copie 
 sudo tee /etc/bind/db.${ip_invertida} > /dev/null <<EOT
 ;
@@ -167,6 +167,3 @@ service bind9 restart
 #checo el status
 service bind9 status
 
-nslookup $dominio
-nslookup www.$dominio
-nslookup $servidor_ip
