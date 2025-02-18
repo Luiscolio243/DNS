@@ -167,3 +167,7 @@ service bind9 restart
 #checo el status
 service bind9 status
 
+
+
+
+

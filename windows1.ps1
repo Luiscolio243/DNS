@@ -1,3 +1,4 @@
+# Función para verificar si una IP es válida
 function VerificarDireccionIP {
     param (
         [string]$direccionIP
@@ -7,6 +8,7 @@ function VerificarDireccionIP {
     return $direccionIP -match $formatoValido
 }
 
+# Función para validar un dominio 
 function VerificarNombreDominio {
     param (
         [string]$nombreDominio
@@ -38,7 +40,7 @@ do {
     }
 } while ($true)
 
-# Dividir la IP en segmentos y construir la IP reversa
+# Dividir la IP en segmentos y construir la IP invesa
 $segmentos = $direccionIP -split '\.'
 $segmentoTres = "$($segmentos[0]).$($segmentos[1]).$($segmentos[2])"
 $ipReversa = "$($segmentos[2]).$($segmentos[1]).$($segmentos[0]).in-addr.arpa"
