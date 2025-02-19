@@ -75,9 +75,6 @@ function ConfigurarDHCP {
     # Crea un nuevo ámbito DHCP con el rango especificado
     Add-DhcpServerv4Scope -Name "RedLocal" -StartRange $ip_inicio -EndRange $ip_fin -SubnetMask $mascara
     
-    # Excluye la IP del servidor del rango asignado por DHCP
-    Add-DhcpServerv4ExclusionRange -ScopeId $subred -StartRange $ip_servidor -EndRange $ip_servidor
-    
     # Reinicia el servicio DHCP
     Restart-Service -Name DHCPServer
     
