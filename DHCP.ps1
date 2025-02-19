@@ -91,4 +91,4 @@ $ip_inicio = ObtenerIPValida -mensaje "Ingrese la IP de inicio del rango DHCP"
 $ip_fin = ObtenerRangoValido $ip_inicio
 
 # Llama a la función para configurar el DHCP
-Configurar-DHCP -ip_servidor $ip_servidor -ip_inicio $ip_inicio -ip_fin $ip_fin
+ConfigurarDHCP -ip_servidor $ip_servidor -ip_inicio $ip_inicio -ip_fin $ip_fin
