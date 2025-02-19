@@ -31,7 +31,7 @@ function ObtenerRangoValido {
     )
     while ($true) {
         # Solicita la IP final del rango
-        $ip_fin = Obtener-IPValida -mensaje "Ingrese la IP de fin del rango DHCP"
+        $ip_fin = ObtenerIPValida -mensaje "Ingrese la IP de fin del rango DHCP"
         
         # Extrae el último octeto de las IPs de inicio y fin
         $octeto_fin = [int]($ip_fin -split '\.')[3]
@@ -86,9 +86,9 @@ function ConfigurarDHCP {
 }
 
 # Ejecución principal del script
-$ip_servidor = Obtener-IPValida -mensaje "Ingrese la dirección IP del servidor DNS"
-$ip_inicio = Obtener-IPValida -mensaje "Ingrese la IP de inicio del rango DHCP"
-$ip_fin = Obtener-RangoValido -ip_inicio $ip_inicio
+$ip_servidor = ObtenerIPValida -mensaje "Ingrese la dirección IP del servidor DNS"
+$ip_inicio = ObtenerIPValida -mensaje "Ingrese la IP de inicio del rango DHCP"
+$ip_fin = ObtenerRangoValido $ip_inicio
 
 # Llama a la función para configurar el DHCP
 Configurar-DHCP -ip_servidor $ip_servidor -ip_inicio $ip_inicio -ip_fin $ip_fin
