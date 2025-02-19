@@ -15,7 +15,7 @@ function ObtenerIPValida {
     )
     while ($true) {
         $ip = Read-Host $mensaje
-        if (Validar-IP -ip $ip) {
+        if (ValidarIP -ip $ip) {
             Write-Host "¡Dirección IP válida ingresada: $ip!"
             return $ip
         } else {
