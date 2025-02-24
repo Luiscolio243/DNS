@@ -108,3 +108,5 @@ sudo service isc-dhcp-server restart
 sudo service isc-dhcp-server status
 
 echo "Configuración del servidor DHCP completada."
+
+
