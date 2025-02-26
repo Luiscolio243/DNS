@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Función para validar una dirección IP
-validar_ip() {
+ValidarIP() {
     local ip_address=$1
     local valid_format="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
 
@@ -15,7 +15,7 @@ validar_ip() {
 # Solicitar la dirección IP del servidor DNS
 while true; do
     read -p "Ingrese la dirección IP del servidor DNS: " dns_ip
-    if validar_ip "$dns_ip"; then
+    if ValidarIP "$dns_ip"; then
         echo "¡Dirección IP válida ingresada: $dns_ip!"
         break
     else
@@ -26,7 +26,7 @@ done
 # Solicitar la IP de inicio del rango DHCP
 while true; do
     read -p "Ingrese la IP de inicio del rango DHCP: " inicio_ip
-    if validar_ip "$inicio_ip"; then
+    if ValidarIP "$inicio_ip"; then
         echo "IP de inicio válida: $inicio_ip"
         break
     else
@@ -37,7 +37,7 @@ done
 # Solicitar la IP de fin del rango DHCP
 while true; do
     read -p "Ingrese la IP de fin del rango DHCP: " fin_ip
-    if validar_ip "$fin_ip"; then
+    if ValidarIP "$fin_ip"; then
         fin_octeto=$(echo "$fin_ip" | awk -F. '{print $4}')
         inicio_octeto=$(echo "$inicio_ip" | awk -F. '{print $4}')
 
