@@ -1,5 +1,5 @@
 # Función para verificar si una IP es válida
-function VerificarDireccionIP {
+function ValidarIP {
     param (
         [string]$direccionIP
     )
@@ -21,7 +21,7 @@ function VerificarNombreDominio {
 # Solicitar IP del servidor DNS
 do {
     $direccionIP = Read-Host "Ingrese la IP del servidor DNS"
-    if (VerificarDireccionIP $direccionIP) {
+    if (ValidarIP $direccionIP) {
         Write-Host "Dirección IP válida: $direccionIP" -ForegroundColor Green
         break
     } else {
