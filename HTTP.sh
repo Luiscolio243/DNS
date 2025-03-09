@@ -1,9 +1,17 @@
 #!/bin/bash
 
-# Función para mostrar las versiones disponibles dinámicamente
+# Función para obtener todas las versiones disponibles dinámicamente
 elegir_version() {
     local servicio="$1"
-    local -n versiones="$2"
+    local url="$2"
+    echo "Obteniendo versiones disponibles de $servicio..."
+    local versiones=( $(curl -s "$url" | grep -oP '(?<=href=")\d+\.\d+\.\d+(?=/")' | sort -Vr) )
+    
+    if [ ${#versiones[@]} -eq 0 ]; then
+        echo "No se encontraron versiones disponibles para $servicio."
+        exit 1
+    fi
+    
     echo "Seleccione la versión de $servicio:"
     select version in "${versiones[@]}"; do
         if [[ -n "$version" ]]; then
@@ -17,8 +25,7 @@ elegir_version() {
 
 # Función para instalar Apache
 instalar_apache() {
-    local versiones_apache=("2.4.58" "2.4.1")
-    elegir_version "Apache" versiones_apache
+    elegir_version "Apache" "https://downloads.apache.org/httpd/"
     read -p "Ingrese el puerto en el que desea configurar Apache: " puerto
     sudo apt update && sudo apt install -y apache2
     sudo sed -i "s/Listen 80/Listen $puerto/g" /etc/apache2/ports.conf
@@ -28,8 +35,7 @@ instalar_apache() {
 
 # Función para instalar Tomcat
 instalar_tomcat() {
-    local versiones_tomcat=("9.0.80" "10.1.10")
-    elegir_version "Tomcat" versiones_tomcat
+    elegir_version "Tomcat" "https://downloads.apache.org/tomcat/"
     read -p "Ingrese el puerto en el que desea configurar Tomcat: " puerto
     sudo apt update && sudo apt install -y tomcat9
     sudo sed -i "s/port=\"8080\"/port=\"$puerto\"/g" /etc/tomcat9/server.xml
@@ -39,8 +45,7 @@ instalar_tomcat() {
 
 # Función para instalar Nginx
 instalar_nginx() {
-    local versiones_nginx=("1.22.1" "1.25.2")
-    elegir_version "Nginx" versiones_nginx
+    elegir_version "Nginx" "http://nginx.org/download/"
     read -p "Ingrese el puerto en el que desea configurar Nginx: " puerto
     sudo apt update && sudo apt install -y nginx
     sudo sed -i "s/listen 80;/listen $puerto;/g" /etc/nginx/sites-available/default
