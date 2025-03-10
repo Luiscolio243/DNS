@@ -7,7 +7,7 @@ function Elegir-Version {
     )
     
     Write-Host "Obteniendo versiones disponibles de $Servicio..."
-    $Versiones = (Invoke-WebRequest -Uri $Url -UseBasicParsing).Links | Where-Object { $_.href -match '\d+\.\d+\.\d+/' } | ForEach-Object { $_.href -replace '/$','' }
+    $Versiones = (Invoke-WebRequest -Uri $Url -UseBasicParsing).Links | Where-Object { $_.href -match '\d+\.\d+\.\d+/' } | ForEach-Object { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
     
     if (-not $Versiones) {
         Write-Host "No se encontraron versiones disponibles para $Servicio."
