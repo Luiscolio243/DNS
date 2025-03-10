@@ -7,15 +7,17 @@ function Elegir-Version {
     )
 
     Write-Host "Obteniendo versiones disponibles de $Servicio..."
-
-    # Usar un User-Agent para evitar bloqueos en algunas páginas
+    
     $Headers = @{ 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
 
-    # Obtener la lista de enlaces desde la página
-    $Response = Invoke-WebRequest -Uri $Url -UseBasicParsing -Headers $Headers
-    $Links = $Response.Links | Select-Object -ExpandProperty href
+    if ($Servicio -eq "Caddy") {
+        $JsonData = Invoke-RestMethod -Uri $Url -Headers $Headers
+        $Links = $JsonData | Select-Object -ExpandProperty tag_name
+    } else {
+        $Response = Invoke-WebRequest -Uri $Url -UseBasicParsing -Headers $Headers
+        $Links = $Response.Links | Select-Object -ExpandProperty href
+    }
 
-    # Filtrar solo los enlaces que parecen versiones
     $Versiones = $Links |
         Where-Object { $_ -match 'v?(\d+\.\d+\.\d+)' } |
         ForEach-Object { ($_ -match 'v?(\d+\.\d+\.\d+)')[1] } |
@@ -57,26 +59,24 @@ function Instalar-IIS {
 
 # Función para instalar Lighttpd
 function Instalar-Lighttpd {
-    $Version = Elegir-Version "Lighttpd" "https://download.lighttpd.net/lighttpd/releases-1.4.x/"
-    $Puerto = Read-Host "Ingrese el puerto en el que desea configurar Lighttpd"
-    
-    Write-Host "Descargando Lighttpd versión $Version..."
-    Invoke-WebRequest -Uri "https://download.lighttpd.net/lighttpd/releases-1.4.x/lighttpd-$Version-win.zip" -OutFile "$env:TEMP\Lighttpd.zip"
-    Expand-Archive -Path "$env:TEMP\Lighttpd.zip" -DestinationPath "C:\Lighttpd"
-    
-    (Get-Content "C:\Lighttpd\conf\lighttpd.conf") -replace 'server.port = 80', "server.port = $Puerto" | Set-Content "C:\Lighttpd\conf\lighttpd.conf"
-    Start-Process -FilePath "C:\Lighttpd\lighttpd.exe" -NoNewWindow -Wait
-    
-    Write-Host "Lighttpd instalado y configurado en el puerto $Puerto."
+    Write-Host "Lighttpd no tiene una versión oficial para Windows. Instalación cancelada."
+    exit 1
 }
 
 # Función para instalar Caddy
 function Instalar-Caddy {
-    $Version = Elegir-Version "Caddy" "https://api.github.com/repos/caddyserver/caddy/releases"
+    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/caddyserver/caddy/releases/latest" -Headers @{ 'User-Agent' = 'Mozilla/5.0' }
+    $DownloadUrl = $LatestRelease.assets | Where-Object { $_.name -match 'windows_amd64.zip' } | Select-Object -ExpandProperty browser_download_url
+
+    if (-not $DownloadUrl) {
+        Write-Host "No se encontró una versión válida de Caddy para Windows."
+        exit 1
+    }
+    
     $Puerto = Read-Host "Ingrese el puerto en el que desea configurar Caddy"
     
-    Write-Host "Descargando Caddy versión $Version..."
-    Invoke-WebRequest -Uri "https://github.com/caddyserver/caddy/releases/download/v$Version/caddy_windows_amd64.zip" -OutFile "$env:TEMP\Caddy.zip"
+    Write-Host "Descargando Caddy desde $DownloadUrl ..."
+    Invoke-WebRequest -Uri $DownloadUrl -OutFile "$env:TEMP\Caddy.zip"
     Expand-Archive -Path "$env:TEMP\Caddy.zip" -DestinationPath "C:\Caddy"
     
     (Get-Content "C:\Caddy\Caddyfile") -replace 'http://localhost', "http://localhost:$Puerto" | Set-Content "C:\Caddy\Caddyfile"
@@ -88,7 +88,7 @@ function Instalar-Caddy {
 # Menú de selección de servicio
 Write-Host "¿Qué servicio desea instalar? (IIS es obligatorio)"
 Write-Host "1.- IIS (Obligatorio)"
-Write-Host "2.- Lighttpd"
+Write-Host "2.- Lighttpd (No disponible en Windows)"
 Write-Host "3.- Caddy"
 Write-Host "4.- Salir"
 $choice = Read-Host "Seleccione una opción (1-4)"
