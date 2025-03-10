@@ -1,0 +1,98 @@
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_buildable-artifact.pem" al tipo "System.Version". Error: 
+"La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...le-artifact.pem:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_buildable-artifact.tar.gz" al tipo "System.Version". Error: 
+"La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...artifact.tar.gz:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_buildable-artifact.tar.gz.sig" al tipo "System.Version". 
+Error: "La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...fact.tar.gz.sig:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor "/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_checksums.txt" 
+al tipo "System.Version". Error: "La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...1_checksums.txt:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_checksums.txt.pem" al tipo "System.Version". Error: "La 
+parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...ecksums.txt.pem:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_checksums.txt.sig" al tipo "System.Version". Error: "La 
+parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...ecksums.txt.sig:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_freebsd_amd64.pem" al tipo "System.Version". Error: "La 
+parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...eebsd_amd64.pem:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_freebsd_amd64.sbom" al tipo "System.Version". Error: "La 
+parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca...ebsd_amd64.sbom:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_freebsd_amd64.sbom.pem" al tipo "System.Version". Error: 
+"La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca..._amd64.sbom.pem:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
+ 
+Sort-Object : No se puede convertir el valor 
+"/caddyserver/caddy/releases/download/v2.9.1/caddy_2.9.1_freebsd_amd64.sbom.sig" al tipo "System.Version". Error: 
+"La parte de la cadena de versión es demasiado corta o larga."
+En línea: 10 Carácter: 170
++ ...  { $_.href -replace '/$','' } | Sort-Object {[version]$_} -Descending
++                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidResult: (/caddyserver/ca..._amd64.sbom.sig:PSObject) [Sort-Object], RuntimeExce 
+   ption
+    + FullyQualifiedErrorId : ExpressionEvaluation,Microsoft.PowerShell.Commands.SortObjectCommand
