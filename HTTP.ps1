@@ -5,27 +5,34 @@ function Elegir-Version {
         [string]$Servicio,
         [string]$Url
     )
-    
+
     Write-Host "Obteniendo versiones disponibles de $Servicio..."
-    
-    # Obtener enlaces válidos desde la página oficial
-    $Versiones = (Invoke-WebRequest -Uri $Url -UseBasicParsing).Links |
-        Where-Object { $_.href -match '(\d+\.\d+\.\d+)/' } |
-        ForEach-Object { ($_ -match '(\d+\.\d+\.\d+)/')[1] } |
+
+    # Usar un User-Agent para evitar bloqueos en algunas páginas
+    $Headers = @{ 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+
+    # Obtener la lista de enlaces desde la página
+    $Response = Invoke-WebRequest -Uri $Url -UseBasicParsing -Headers $Headers
+    $Links = $Response.Links | Select-Object -ExpandProperty href
+
+    # Filtrar solo los enlaces que parecen versiones
+    $Versiones = $Links |
+        Where-Object { $_ -match 'v?(\d+\.\d+\.\d+)' } |
+        ForEach-Object { ($_ -match 'v?(\d+\.\d+\.\d+)')[1] } |
         Sort-Object {[version]$_} -Descending
-    
+
     if (-not $Versiones) {
         Write-Host "No se encontraron versiones disponibles para $Servicio."
         exit 1
     }
-    
+
     Write-Host "Seleccione la versión de $($Servicio):"
-    for ($i=0; $i -lt $Versiones.Count; $i++) {
+    for ($i = 0; $i -lt $Versiones.Count; $i++) {
         Write-Host "$($i+1). $($Versiones[$i])"
     }
-    
+
     $Seleccion = Read-Host "Ingrese el número de la versión deseada"
-    
+
     if ($Seleccion -match '^[0-9]+$' -and $Seleccion -gt 0 -and $Seleccion -le $Versiones.Count) {
         return $Versiones[$Seleccion - 1]
     } else {
