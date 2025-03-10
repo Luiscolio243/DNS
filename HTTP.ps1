@@ -7,10 +7,12 @@ function Elegir-Version {
     )
     
     Write-Host "Obteniendo versiones disponibles de $Servicio..."
-    $Versiones = (Invoke-WebRequest -Uri $Url -UseBasicParsing).Links | 
-        Where-Object { $_.href -match '/v?(\d+\.\d+\.\d+)/' } | 
-        ForEach-Object { ($_ -match '/v?(\d+\.\d+\.\d+)/')[1] } |
-        Sort-Object -Descending
+    
+    # Obtener enlaces válidos desde la página oficial
+    $Versiones = (Invoke-WebRequest -Uri $Url -UseBasicParsing).Links |
+        Where-Object { $_.href -match '(\d+\.\d+\.\d+)/' } |
+        ForEach-Object { ($_ -match '(\d+\.\d+\.\d+)/')[1] } |
+        Sort-Object {[version]$_} -Descending
     
     if (-not $Versiones) {
         Write-Host "No se encontraron versiones disponibles para $Servicio."
@@ -63,7 +65,7 @@ function Instalar-Lighttpd {
 
 # Función para instalar Caddy
 function Instalar-Caddy {
-    $Version = Elegir-Version "Caddy" "https://github.com/caddyserver/caddy/releases"
+    $Version = Elegir-Version "Caddy" "https://api.github.com/repos/caddyserver/caddy/releases"
     $Puerto = Read-Host "Ingrese el puerto en el que desea configurar Caddy"
     
     Write-Host "Descargando Caddy versión $Version..."
