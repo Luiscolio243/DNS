@@ -14,7 +14,7 @@ function Elegir-Version {
         exit 1
     }
     
-    Write-Host "Seleccione la versión de $Servicio:"
+    Write-Host "Seleccione la versión de $($Servicio):"
     for ($i=0; $i -lt $Versiones.Count; $i++) {
         Write-Host "$($i+1). $($Versiones[$i])"
     }
@@ -53,7 +53,7 @@ function Instalar-Tomcat {
     Invoke-WebRequest -Uri "https://downloads.apache.org/tomcat/tomcat-$Version-windows.zip" -OutFile "$env:TEMP\Tomcat.zip"
     Expand-Archive -Path "$env:TEMP\Tomcat.zip" -DestinationPath "C:\Tomcat"
     
-    (Get-Content "C:\Tomcat\conf\server.xml") -replace 'port="8080"', "port="$Puerto"" | Set-Content "C:\Tomcat\conf\server.xml"
+    (Get-Content "C:\Tomcat\conf\server.xml") -replace 'port="8080"', ("port=`"$Puerto`"") | Set-Content "C:\Tomcat\conf\server.xml"
     Start-Process -FilePath "C:\Tomcat\bin\catalina.bat" -ArgumentList "run" -NoNewWindow -Wait
     Write-Host "Tomcat instalado y configurado en el puerto $Puerto."
 }
