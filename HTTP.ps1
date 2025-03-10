@@ -1,94 +1,112 @@
 
+# Función para obtener versiones de IIS en Windows Server
 function Get-IISVersions {
-    Write-Host "`n🔹 Versiones de IIS en Windows Server disponibles:"
-    Write-Host "1. IIS 10.0 (Windows Server 2016, 2019, 2022)"
-    Write-Host "2. IIS 8.5  (Windows Server 2012 R2)"
-    Write-Host "3. IIS 8.0  (Windows Server 2012)"
-    Write-Host "4. IIS 7.5  (Windows Server 2008 R2)"
-}
-
-# Función para obtener la versión instalada de IIS
-function Get-IISVersion {
-    if (Get-Command "Get-WindowsFeature" -ErrorAction SilentlyContinue) {
-        $iisFeature = Get-WindowsFeature -Name Web-Server
-        if ($iisFeature.Installed) {
-            $version = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\InetStp").VersionString
-            Write-Host "IIS instalado en versión: $version"
-        } else {
-            Write-Host "IIS no está instalado en el sistema."
-        }
-    } else {
-        Write-Host "⚠ No se pudo obtener información de IIS. Ejecute PowerShell como Administrador."
+    Write-Host "`n🔹 Versiones de IIS disponibles en Windows Server:"
+    $versions = @(
+        "IIS 10.0 (Windows Server 2016, 2019, 2022)",
+        "IIS 8.5  (Windows Server 2012 R2)",
+        "IIS 8.0  (Windows Server 2012)",
+        "IIS 7.5  (Windows Server 2008 R2)"
+    )
+    for ($i = 0; $i -lt $versions.Count; $i++) {
+        Write-Host "$($i+1). $($versions[$i])"
     }
+    return $versions
 }
 
-# Función para instalar IIS
+# Función para instalar IIS según la versión seleccionada
 function Install-IIS {
-    Write-Host "Instalando IIS..."
-    Install-WindowsFeature -name Web-Server -IncludeManagementTools
-    Write-Host "IIS instalado correctamente."
-    Get-IISVersion  # Mostrar versión después de la instalación
-}
-
-# Función para instalar WSL con Ubuntu o Debian
-function Install-WSL {
-    Write-Host "Instalando Windows Subsystem for Linux (WSL)..."
-
-    # Habilitar características de Windows necesarias para WSL
-    dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /norestart
-    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /norestart
-
-    Write-Host "Seleccione la distribución de Linux a instalar:"
-    Write-Host "1. Ubuntu"
-    Write-Host "2. Debian"
-
+    $versions = Get-IISVersions
     do {
-        $choice = Read-Host "Ingrese el número de la distribución"
-        $valid = $choice -match '^[1-2]$'
+        $choice = Read-Host "Ingrese el número de la versión de IIS que desea instalar"
+        $valid = ($choice -match '^\d+$') -and ($choice -ge 1) -and ($choice -le $versions.Count)
         if (-not $valid) {
             Write-Host "Opción inválida. Intente de nuevo."
         }
     } while (-not $valid)
 
-    $distro = if ($choice -eq "1") { "Ubuntu" } else { "Debian" }
+    $selectedVersion = $versions[$choice - 1]
+    Write-Host "Instalando $selectedVersion..."
 
-    Write-Host "Descargando e instalando $distro..."
-    Invoke-WebRequest -Uri "https://aka.ms/wsl-$distro" -OutFile "$env:TEMP\$distro.appx"
-    Add-AppxPackage -Path "$env:TEMP\$distro.appx"
+    if ($selectedVersion -match "IIS 10.0") {
+        Install-WindowsFeature -name Web-Server -IncludeManagementTools
+    } else {
+        Write-Host "⚠ No es posible instalar versiones anteriores a IIS 10.0 automáticamente. Debe descargarlas manualmente."
+    }
 
-    Write-Host "WSL instalado correctamente con $distro. Puede ejecutarlo con el comando `wsl`."
+    Write-Host " Instalación completada para $selectedVersion."
 }
 
-# Función para obtener versiones de Nginx desde la página oficial
+# Función para obtener versiones de XAMPP ordenadas de más nueva a más vieja
+function Get-XAMPPVersions {
+    Write-Host "Obteniendo versiones de XAMPP..."
+    $url = "https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/"
+    $html = Invoke-WebRequest -Uri $url -UseBasicParsing
+    $versions = $html.Links | Where-Object { $_.href -match 'XAMPP%20Windows/(\d+\.\d+\.\d+)/' } | ForEach-Object { $_.href -replace 'XAMPP%20Windows/|/', '' }
+    $versions = $versions | Sort-Object { [version]$_ } -Descending
+    return $versions
+}
+
+# Función para instalar XAMPP
+function Install-XAMPP {
+    $versions = Get-XAMPPVersions
+    if ($versions.Count -eq 0) {
+        Write-Host " No se encontraron versiones de XAMPP disponibles. Abortando..."
+        exit
+    }
+
+    $selectedVersion = Select-Version $versions
+    Write-Host "Instalando XAMPP versión $selectedVersion..."
+    $xamppInstaller = "https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/$selectedVersion/xampp-windows-x64-$selectedVersion.exe/download"
+    $installPath = "C:\xampp$selectedVersion"
+
+    Write-Host "Descargando XAMPP desde $xamppInstaller..."
+    Invoke-WebRequest -Uri $xamppInstaller -OutFile "$env:TEMP\xampp$selectedVersion.exe"
+
+    Write-Host "Ejecutando el instalador de XAMPP..."
+    Start-Process -FilePath "$env:TEMP\xampp$selectedVersion.exe" -ArgumentList "/S /D=$installPath" -Wait
+
+    Write-Host " XAMPP instalado correctamente en $installPath."
+}
+
+# Función para obtener versiones de Nginx ordenadas de más nueva a más vieja
 function Get-NginxVersions {
     Write-Host "Obteniendo versiones de Nginx..."
     $url = "https://nginx.org/en/download.html"
     $html = Invoke-WebRequest -Uri $url -UseBasicParsing
     $matches = [regex]::Matches($html.Content, "nginx-(\d+\.\d+\.\d+).zip") | ForEach-Object { $_.Groups[1].Value }
-    $versions = $matches | Sort-Object { [version]$_ }
+    $versions = $matches | Sort-Object { [version]$_ } -Descending
     return $versions
 }
 
 # Función para instalar Nginx
 function Install-Nginx {
-    param ($version, $port)
-    Write-Host "Instalando Nginx versión $version en el puerto $port..."
-    $nginxInstaller = "https://nginx.org/download/nginx-$version.zip"
-    $installPath = "C:\Nginx$version"
+    $versions = Get-NginxVersions
+    if ($versions.Count -eq 0) {
+        Write-Host " No se encontraron versiones de Nginx disponibles. Abortando..."
+        exit
+    }
+
+    $selectedVersion = Select-Version $versions
+    $port = Select-Port
+
+    Write-Host "Instalando Nginx versión $selectedVersion en el puerto $port..."
+    $nginxInstaller = "https://nginx.org/download/nginx-$selectedVersion.zip"
+    $installPath = "C:\Nginx$selectedVersion"
 
     Write-Host "Descargando Nginx desde $nginxInstaller..."
-    Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$version.zip"
+    Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$selectedVersion.zip"
 
     Write-Host "Instalando Nginx en $installPath..."
-    Expand-Archive -Path "$env:TEMP\Nginx$version.zip" -DestinationPath $installPath -Force
+    Expand-Archive -Path "$env:TEMP\Nginx$selectedVersion.zip" -DestinationPath $installPath -Force
 
     Write-Host "Configurando Firewall para permitir el puerto $port..."
     New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
 
-    Write-Host "Nginx instalado en el puerto $port."
+    Write-Host " Nginx instalado en el puerto $port."
 }
 
-# Función para seleccionar versión de Nginx
+# Función para seleccionar una versión de un servicio
 function Select-Version {
     param ($versions)
     Write-Host "Seleccione una versión:"
@@ -105,7 +123,7 @@ function Select-Version {
     return $versions[$choice - 1]
 }
 
-# Función para seleccionar puerto
+# Función para seleccionar un puerto
 function Select-Port {
     do {
         $port = Read-Host "Ingrese el puerto en el que desea configurar el servicio"
@@ -120,43 +138,23 @@ function Select-Port {
 # Menú de selección con opción de salir
 do {
     Write-Host "`n¿Qué desea instalar?"
-    Write-Host "1. Ver versiones de IIS"
-    Write-Host "2. Instalar IIS"
-    Write-Host "3. Instalar Windows Subsystem for Linux (WSL)"
-    Write-Host "4. Instalar Nginx"
-    Write-Host "5. Salir"
+    Write-Host "1. Instalar IIS (Seleccionar versión)"
+    Write-Host "2. Instalar XAMPP (Seleccionar versión)"
+    Write-Host "3. Instalar Nginx (Seleccionar versión y puerto)"
+    Write-Host "4. Salir"
 
     do {
-        $option = Read-Host "Seleccione una opción (1-5)"
-        $valid = $option -match '^[1-5]$'
+        $option = Read-Host "Seleccione una opción (1-4)"
+        $valid = $option -match '^[1-4]$'
         if (-not $valid) {
             Write-Host "Opción inválida. Intente de nuevo."
         }
     } while (-not $valid)
 
     switch ($option) {
-        "1" {
-            Get-IISVersions
-        }
-        "2" {
-            Install-IIS
-        }
-        "3" {
-            Install-WSL
-        }
-        "4" {
-            $versions = Get-NginxVersions
-            if ($versions.Count -eq 0) {
-                Write-Host "No se encontraron versiones de Nginx disponibles. Abortando..."
-                exit
-            }
-            $selectedVersion = Select-Version $versions
-            $port = Select-Port
-            Install-Nginx -version $selectedVersion -port $port
-        }
-        "5" {
-            Write-Host "Saliendo del script. ¡Hasta luego!"
-            exit
-        }
+        "1" { Install-IIS }
+        "2" { Install-XAMPP }
+        "3" { Install-Nginx }
+        "4" { Write-Host "Saliendo del script. ¡Hasta luego!"; exit }
     }
 } while ($true)
