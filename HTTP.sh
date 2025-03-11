@@ -1,12 +1,29 @@
 #!/bin/bash
 
-# Función para obtener todas las versiones disponibles dinámicamente de la página oficial
-elegir_version() {
+# Función para obtener versiones disponibles desde la página oficial
+obtener_versiones() {
     local servicio="$1"
     local url="$2"
-    echo "Obteniendo versiones disponibles de $servicio..."
-    local versiones=( $(curl -s "$url" | grep -oP '(?<=href=")\d+\.\d+\.\d+(?=/")' | sort -Vr) )
     
+    echo "Obteniendo versiones disponibles de $servicio..."
+
+    # Descargar el HTML de la página
+    contenido=$(curl -s "$url" || wget -qO- "$url")
+
+    # Extraer versiones dependiendo del servicio
+    case $servicio in
+        "Apache")
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href="httpd-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -Vr) )
+            ;;
+        "Tomcat")
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href="v)\d+\.\d+\.\d+(?=/")' | sort -Vr) )
+            ;;
+        "Nginx")
+            versiones=( $(echo "$contenido" | grep -oP '(?<=nginx-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -Vr) )
+            ;;
+    esac
+
+    # Verificar si hay versiones disponibles
     if [ ${#versiones[@]} -eq 0 ]; then
         echo "No se encontraron versiones disponibles para $servicio."
         exit 1
@@ -25,7 +42,7 @@ elegir_version() {
 
 # Función para instalar Apache
 instalar_apache() {
-    elegir_version "Apache" "https://downloads.apache.org/httpd/"
+    obtener_versiones "Apache" "https://downloads.apache.org/httpd/"
     read -p "Ingrese el puerto en el que desea configurar Apache: " puerto
     sudo apt update && sudo apt install -y apache2
     sudo sed -i "s/Listen 80/Listen $puerto/g" /etc/apache2/ports.conf
@@ -35,7 +52,7 @@ instalar_apache() {
 
 # Función para instalar Tomcat
 instalar_tomcat() {
-    elegir_version "Tomcat" "https://downloads.apache.org/tomcat/"
+    obtener_versiones "Tomcat" "https://downloads.apache.org/tomcat/"
     read -p "Ingrese el puerto en el que desea configurar Tomcat: " puerto
     sudo apt update && sudo apt install -y tomcat9
     sudo sed -i "s/port=\"8080\"/port=\"$puerto\"/g" /etc/tomcat9/server.xml
@@ -45,7 +62,7 @@ instalar_tomcat() {
 
 # Función para instalar Nginx
 instalar_nginx() {
-    elegir_version "Nginx" "http://nginx.org/download/"
+    obtener_versiones "Nginx" "http://nginx.org/download/"
     read -p "Ingrese el puerto en el que desea configurar Nginx: " puerto
     sudo apt update && sudo apt install -y nginx
     sudo sed -i "s/listen 80;/listen $puerto;/g" /etc/nginx/sites-available/default
