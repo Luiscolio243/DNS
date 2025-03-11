@@ -13,13 +13,15 @@ obtener_versiones() {
     # Extraer versiones dependiendo del servicio
     case $servicio in
         "Apache")
+            # Apache HTTPD almacena las versiones con el formato httpd-X.Y.Z.tar.gz
             versiones=( $(echo "$contenido" | grep -oP '(?<=href="httpd-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -V) )
             ;;
         "Tomcat")
-            # Tomcat tiene múltiples versiones activas, buscamos dentro de los subdirectorios.
+            # Tomcat usa subdirectorios con formato X.Y.Z/
             versiones=( $(echo "$contenido" | grep -oP '(?<=href=")\d+\.\d+\.\d+(?=/")' | sort -V) )
             ;;
         "Nginx")
+            # Nginx almacena los paquetes en formato nginx-X.Y.Z.tar.gz
             versiones=( $(echo "$contenido" | grep -oP '(?<=nginx-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -V) )
             ;;
     esac
@@ -44,7 +46,7 @@ obtener_versiones() {
 
 # Función para instalar Apache
 instalar_apache() {
-    obtener_versiones "Apache" "https://downloads.apache.org/httpd/"
+    obtener_versiones "Apache" "http://downloads.apache.org/httpd/"
     read -p "Ingrese el puerto en el que desea configurar Apache: " puerto
     sudo apt update && sudo apt install -y apache2
     sudo sed -i "s/Listen 80/Listen $puerto/g" /etc/apache2/ports.conf
@@ -54,7 +56,7 @@ instalar_apache() {
 
 # Función para instalar Tomcat
 instalar_tomcat() {
-    obtener_versiones "Tomcat" "https://downloads.apache.org/tomcat/"
+    obtener_versiones "Tomcat" "http://downloads.apache.org/tomcat/"
     read -p "Ingrese el puerto en el que desea configurar Tomcat: " puerto
     sudo apt update && sudo apt install -y tomcat9
     sudo sed -i "s/port=\"8080\"/port=\"$puerto\"/g" /etc/tomcat9/server.xml
