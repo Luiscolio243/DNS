@@ -1,24 +1,23 @@
 advertencias_nombre() {
-    echo -e "\n=== ADVERTENCIAS ==="
-    echo "1. El nombre de usuario debe tener entre 1 y 20 caracteres."
-    echo "2. El nombre de usuario no puede contener caracteres especiales."
-    echo "3. El nombre de usuario no puede ser solo números, debe incluir al menos una letra."
-    echo "4. El nombre de usuario no puede estar vacío."
-    echo "5. El nombre de usuario no puede tener letras mayúsculas."
-    echo "6. El nombre de usuario no puede tener espacios en blanco."
-    echo "7. El nombre de usuario no puede ser un nombre reservado del sistema."
-    echo "8. El nombre de usuario no puede ser uno que ya existe."
-    echo "8. El nombre de usuario no debe de empezar con numeros."
+    echo -e "\n ¡ATENCIÓN! REGLAS PARA TU NOMBRE DE USUARIO "
+    echo "Tu nombre debe tener entre 1 y 20 caracteres, ni más ni menos."
+    echo "Nada de símbolos extraños como @, #, $, %, ¡solo letras y números!"
+    echo "No puedes usar solo números, al menos una letra debe estar presente."
+    echo "¿Dejarlo en blanco? Ni lo pienses, elige algo."
+    echo "Mayúsculas no permitidas, todo en minúsculas por favor."
+    echo "No uses espacios, el nombre debe ser una sola palabra."
+    echo "Si el nombre ya está tomado, busca otra opción."
+    echo "No puede empezar con un número, pon primero una letra."
+    echo "Sigue estas reglas y estarás listo para continuar."
 }
 
 advertencias_contrasena() {
-    echo -e "\n=== ADVERTENCIAS ==="
-    echo "1. La contraseña debe tener entre 3 y 14 caracteres"
-    echo "2. La contraseña no debe contener el nombre de usuario en ella"
-    echo "3. La contraseña debe contener al menos una letra, un numero y un caracter especial"
+    echo -e "\n RESTRICCIONES DE CONTRASEÑA "
+    echo "Longitud permitida: mínimo 3 y máximo 14 caracteres."
+    echo "No debe contener el identificador del usuario."
+    echo "Debe incluir al menos un número, un símbolo especial y una letra."
 }
 
-NOMBRES_RESERVADOS=("root" "daemon" "bin" "sys" "sync" "games" "man" "lp" "mail" "news" "uucp" "proxy" "www-data" "backup" "list" "irc" "nobody" "systemd-network")
 
 validar_nombre_usuario() {
     while true; do
@@ -38,7 +37,7 @@ validar_nombre_usuario() {
             continue
         fi
 
-        if [[ ${#nombre} -lt 1 || ${#nombre} -gt 8 ]]; then
+        if [[ ${#nombre} -lt 1 || ${#nombre} -gt 20 ]]; then
             continue
         fi
 
@@ -47,10 +46,6 @@ validar_nombre_usuario() {
         fi
 
         if [[ "$nombre" =~ ^[0-9]+$ ]]; then
-            continue
-        fi
-
-        if [[ " ${NOMBRES_RESERVADOS[@]} " =~ " $nombre " ]]; then
             continue
         fi
 
