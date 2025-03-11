@@ -12,22 +12,24 @@ obtener_versiones() {
     # Extraer versiones dependiendo del servicio
     case $servicio in
         "Apache")
-            # Apache HTTPD almacena las versiones en directorios como 2.4.63/
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -Vu) )
+            # Apache HTTPD almacena las versiones en subdirectorios numerados
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
             ;;
         "Tomcat")
             # Tomcat usa directorios con versiones en la página de descargas
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -Vu) )
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
             ;;
         "Nginx")
             # Nginx almacena los paquetes en formato nginx-X.Y.Z.tar.gz
-            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz)' | sed 's/nginx-//' | sort -Vu) )
+            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz)' | sed 's/nginx-//' | sort -V | uniq) )
             ;;
     esac
 
-    # Verificar si hay versiones disponibles
+    # Mostrar el contenido descargado si no se encuentran versiones (depuración)
     if [ ${#versiones[@]} -eq 0 ]; then
         echo "No se encontraron versiones disponibles para $servicio."
+        echo "Contenido obtenido (primeras 20 líneas):"
+        echo "$contenido" | head -n 20  # Mostrar las primeras 20 líneas para depuración
         exit 1
     fi
 
