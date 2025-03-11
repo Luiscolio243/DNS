@@ -13,13 +13,13 @@ obtener_versiones() {
     # Extraer versiones dependiendo del servicio
     case $servicio in
         "Apache")
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href="httpd-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -Vr) )
+            versiones=( $(echo "$contenido" | grep -oP '(?<=httpd-)\d+\.\d+\.\d+(?=\.tar\.gz)' | sort -Vr) )
             ;;
         "Tomcat")
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href="v)\d+\.\d+\.\d+(?=/")' | sort -Vr) )
+            versiones=( $(echo "$contenido" | grep -oP '(?<=v)\d+\.\d+\.\d+(?=/")' | sort -Vr) )
             ;;
         "Nginx")
-            versiones=( $(echo "$contenido" | grep -oP '(?<=nginx-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -Vr) )
+            versiones=( $(echo "$contenido" | grep -oP '(?<=nginx-)\d+\.\d+\.\d+(?=\.tar\.gz)' | sort -Vr) )
             ;;
     esac
 
@@ -28,8 +28,9 @@ obtener_versiones() {
         echo "No se encontraron versiones disponibles para $servicio."
         exit 1
     fi
-    
-    echo "Seleccione la versión de $servicio:"
+
+    # Mostrar versiones en orden descendente
+    echo "Seleccione la versión de $servicio (de la más nueva a la más antigua):"
     select version in "${versiones[@]}"; do
         if [[ -n "$version" ]]; then
             echo "Seleccionó la versión $version"
