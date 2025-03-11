@@ -5,36 +5,34 @@ obtener_versiones() {
     local url="$2"
     
     echo "Obteniendo versiones disponibles de $servicio..."
-    
+
     # Descargar el HTML de la página
     contenido=$(curl -s "$url" || wget -qO- "$url")
 
     # Extraer versiones dependiendo del servicio
     case $servicio in
         "Apache")
-            # Apache HTTPD almacena las versiones en subdirectorios numerados
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
+            # Busca solo versiones que tienen paquetes tar.gz (Linux)
+            versiones=( $(echo "$contenido" | grep -oP 'httpd-\d+\.\d+\.\d+(?=\.tar\.gz")' | sed 's/httpd-//' | sort -V | uniq) )
             ;;
         "Tomcat")
-            # Tomcat usa directorios con versiones en la página de descargas
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
+            # Busca versiones Tomcat que tengan archivos tar.gz (para Linux)
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href="v)[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
             ;;
         "Nginx")
-            # Nginx almacena los paquetes en formato nginx-X.Y.Z.tar.gz
-            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz)' | sed 's/nginx-//' | sort -V | uniq) )
+            # Busca versiones de Nginx que sean tar.gz (para Linux)
+            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz")' | sed 's/nginx-//' | sort -V | uniq) )
             ;;
     esac
 
-    # Mostrar el contenido descargado si no se encuentran versiones (depuración)
+    # Verificar si hay versiones disponibles
     if [ ${#versiones[@]} -eq 0 ]; then
-        echo "No se encontraron versiones disponibles para $servicio."
-        echo "Contenido obtenido (primeras 20 líneas):"
-        echo "$contenido" | head -n 20  # Mostrar las primeras 20 líneas para depuración
+        echo "No se encontraron versiones para Linux en $servicio."
         exit 1
     fi
 
     # Mostrar versiones en orden de la más antigua a la más nueva
-    echo "Seleccione la versión de $servicio (de la más antigua a la más nueva):"
+    echo "Seleccione la versión de $servicio (solo Linux) de la más antigua a la más nueva:"
     select version in "${versiones[@]}"; do
         if [[ -n "$version" ]]; then
             echo "Seleccionó la versión $version"
