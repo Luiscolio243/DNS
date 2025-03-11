@@ -1,28 +1,30 @@
 #!/bin/bash
 
 # Función para obtener versiones disponibles desde la página oficial
+#!/bin/bash
+
 obtener_versiones() {
     local servicio="$1"
     local url="$2"
     
     echo "Obteniendo versiones disponibles de $servicio..."
-
+    
     # Descargar el HTML de la página
     contenido=$(curl -s "$url" || wget -qO- "$url")
 
     # Extraer versiones dependiendo del servicio
     case $servicio in
         "Apache")
-            # Apache HTTPD almacena las versiones con el formato httpd-X.Y.Z.tar.gz
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href="httpd-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -V) )
+            # Apache HTTPD almacena las versiones en formato httpd-X.Y.Z.tar.gz
+            versiones=( $(echo "$contenido" | grep -oP 'httpd-\d+\.\d+\.\d+(?=\.tar\.gz)' | sed 's/httpd-//' | sort -V) )
             ;;
         "Tomcat")
-            # Tomcat usa subdirectorios con formato X.Y.Z/
-            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")\d+\.\d+\.\d+(?=/")' | sort -V) )
+            # Tomcat usa directorios con versiones en la página de descargas
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V) )
             ;;
         "Nginx")
             # Nginx almacena los paquetes en formato nginx-X.Y.Z.tar.gz
-            versiones=( $(echo "$contenido" | grep -oP '(?<=nginx-)\d+\.\d+\.\d+(?=\.tar\.gz")' | sort -V) )
+            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz)' | sed 's/nginx-//' | sort -V) )
             ;;
     esac
 
@@ -89,3 +91,4 @@ case $choice in
     4) echo "Saliendo..."; exit 0 ;;
     *) echo "Opción inválida. Saliendo..."; exit 1 ;;
 esac
+
