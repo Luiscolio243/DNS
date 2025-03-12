@@ -83,7 +83,7 @@ validar_contrasena() {
         fi
 
         # Verificar si contiene al menos un carácter especial
-        if [[ "$contrasena" =~ [\!\@\#\$\%\^\&\*\(\)\,\.\?\"\'\{\}\|\<\>] ]]; then
+        if [[ "$contrasena" =~ [\+\!\@\#\$\%\^\&\*\(\)\,\.\?\"\'\{\}\|\<\>] ]]; then
             tiene_especial=0
         fi
 
