@@ -1,5 +1,5 @@
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Validar-NombreUsuario.psm1"
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Validar-Contrasena.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Validar-NombreUsuario.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Validar-Contrasena.psm1"
 function Crear-UsuarioFTP {
     $NombreUsuario = Validar-NombreUsuario  # Se asegura que sea válido antes de continuar
     $Password = Validar-Contrasena -NombreUsuario $NombreUsuario  # Se asegura que la contraseña sea válida

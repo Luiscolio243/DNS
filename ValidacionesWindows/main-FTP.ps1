@@ -1,7 +1,7 @@
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Configurar-IP.psm1"
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Configurar-FTP.psm1"
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Crear-Usuario.psm1"
-Import-Module "C:\Users\Administrator\Desktop\practicas\validaciones-ps1\Cambiar-Grupo.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Configurar-IP.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Configurar-FTP.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Crear-Usuario.psm1"
+Import-Module "C:\Users\Administrador\Desktop\ValidacionesWindows\Cambiar-Grupo.psm1"
 
 # Definir la IP fija a usar
 $ip_address = "192.168.1.11"
