@@ -1,5 +1,6 @@
 function Configurar-FTP {
 # Instalación del Servidor FTP en Windows Server
+netsh interface ipv4 set address name="Ethernet 2" static 192.168.1.11 255.255.255.0
 Install-WindowsFeature -Name Web-Ftp-Server, Web-Server -IncludeManagementTools
 Import-Module WebAdministration
 

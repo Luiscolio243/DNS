@@ -14,11 +14,6 @@ function Validar-Contrasena {
             continue
         }
 
-        if ($Password -match [regex]::Escape($NombreUsuario)) {
-            Write-Host "Error: La contraseña no puede contener el nombre de usuario." -ForegroundColor Red
-            continue
-        }
-
         # Verifica los requisitos de la contraseña
         $TieneNumero = $Password -cmatch "\d"  # Requiere al menos un número
         $TieneEspecial = $Password -cmatch "[!@+#$%^&*(),.?""{}|<>]"  # Requiere un carácter especial
