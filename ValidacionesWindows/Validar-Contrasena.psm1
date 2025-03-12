@@ -21,7 +21,7 @@ function Validar-Contrasena {
 
         # Verifica los requisitos de la contraseña
         $TieneNumero = $Password -cmatch "\d"  # Requiere al menos un número
-        $TieneEspecial = $Password -cmatch "[!@#$%^&*(),.?""{}|<>]"  # Requiere un carácter especial
+        $TieneEspecial = $Password -cmatch "[!@+#$%^&*(),.?""{}|<>]"  # Requiere un carácter especial
         $TieneMayuscula = $Password -cmatch "[A-Z]"
         $TieneMinuscula = $Password -cmatch "[a-z]"
 

@@ -14,7 +14,6 @@ advertencias_nombre() {
 advertencias_contrasena() {
     echo -e "\n RESTRICCIONES DE CONTRASEÑA "
     echo "Longitud permitida: mínimo 3 y máximo 14 caracteres."
-    echo "No debe contener el identificador del usuario."
     echo "Debe incluir al menos un número, un símbolo especial y una letra."
 }
 
@@ -65,11 +64,6 @@ validar_contrasena() {
 
         # Validar longitud de la contraseña
         if [[ ${#contrasena} -lt 8 || ${#contrasena} -gt 14 ]]; then
-            continue
-        fi
-
-        # Validar que la contraseña no contenga el nombre de usuario
-        if [[ "$contrasena" == *"$nombre_usuario"* ]]; then
             continue
         fi
 

@@ -1,4 +1,3 @@
- 
 # Instalar el servicio FTP
 sudo apt install vsftpd
 
@@ -51,8 +50,11 @@ echo "Servicio FTP configurado y reiniciado."
 sudo mkdir -p /srv/ftp/publico
 sudo mkdir -p /srv/ftp/reprobados
 sudo mkdir -p /srv/ftp/recursadores
+sudo mkdir -p /srv/ftp/publico/publico
 
 # Asignar permisos
+sudo chown nobody:nogroup /srv/ftp/publico/publico
+sudo chmod 755 /srv/ftp/publico/publico
 sudo chown nobody:nogroup /srv/ftp/publico
 sudo chmod 755 /srv/ftp/publico
 sudo chown nobody:nogroup /srv/ftp/reprobados

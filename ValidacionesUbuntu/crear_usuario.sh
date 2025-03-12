@@ -8,7 +8,7 @@ crear_usuario() {
 
     seleccionar_grupo  # Llamamos la función para obtener el grupo
 
-    # Validar si la variable `grupo` tiene un valor válido
+    # Validar si la variable grupo tiene un valor válido
     if [[ -z "$grupo" ]]; then
         echo "Error: No se seleccionó un grupo válido."
         return
@@ -34,6 +34,8 @@ crear_usuario() {
     sudo chmod 770 "/srv/ftp/$nombre"
     sudo chown $nombre:ftp /srv/ftp/publico
     sudo chmod 755 /srv/ftp/publico
+    sudo chown $nombre:ftp /srv/ftp/publico/publico
+    sudo chmod 755 /srv/ftp/publico/publico
     sudo chown $nombre:ftp /srv/ftp/$grupo
     sudo chmod 770 /srv/ftp/$grupo
     sudo mkdir -p "/srv/ftp/$nombre/$nombre"
@@ -45,7 +47,7 @@ crear_usuario() {
     sudo mkdir -p "/srv/ftp/$nombre/$grupo"
     sudo chown $nombre:ftp /srv/ftp/$nombre/$grupo
     sudo chmod 755 /srv/ftp/$nombre/$grupo
-    sudo mount --bind /srv/ftp/publico "/srv/ftp/$nombre/publico"
+    sudo mount --bind /srv/ftp/publico/publico "/srv/ftp/$nombre/publico"
     sudo mount --bind "/srv/ftp/$grupo" "/srv/ftp/$nombre/$grupo"
     
     echo "Usuario $nombre creado con acceso a su carpeta, la pública y la de $grupo."
