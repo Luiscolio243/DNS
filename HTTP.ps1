@@ -41,10 +41,13 @@ function Install-IIS {
     $selectedVersion = $versions[$choice - 1]
     Write-Host "Instalando $selectedVersion en el puerto $port..."
     
-    Install-WindowsFeature -name Web-Server -IncludeManagementTools
-    New-NetFirewallRule -DisplayName "IIS Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    
-    Write-Host "Instalación completada para $selectedVersion en el puerto $port."
+    if (Is-PortAvailable -port $port) {
+        Install-WindowsFeature -name Web-Server -IncludeManagementTools
+        New-NetFirewallRule -DisplayName "IIS Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+        Write-Host "Instalación completada para $selectedVersion en el puerto $port."
+    } else {
+        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
+    }
 }
 
 # Función para instalar Apache Tomcat
@@ -62,8 +65,12 @@ function Install-Tomcat {
     
     $port = Select-Port
     Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
-    New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    Write-Host "Tomcat $latestVersion instalado correctamente en el puerto $port."
+    if (Is-PortAvailable -port $port) {
+        New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+        Write-Host "Tomcat $latestVersion instalado correctamente en el puerto $port."
+    } else {
+        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
+    }
 }
 
 # Función para instalar Nginx
@@ -85,18 +92,12 @@ function Install-Nginx {
     $selectedVersion = if ($choice -eq 1) { "nginx-$latestVersion" } else { $devVersion }
     Write-Host "Instalando $selectedVersion en el puerto $port..."
     
-    if ($choice -eq 1) {
-        $nginxInstaller = "https://nginx.org/download/nginx-$latestVersion.zip"
-        $installPath = "C:\Nginx$latestVersion"
-        
-        Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$latestVersion.zip"
-        Expand-Archive -Path "$env:TEMP\Nginx$latestVersion.zip" -DestinationPath $installPath -Force
+    if (Is-PortAvailable -port $port) {
+        New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+        Write-Host "$selectedVersion instalado en el puerto $port."
     } else {
-        Write-Host "Para instalar la versión en desarrollo, descárguela manualmente desde el sitio oficial de Nginx."
+        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
     }
-    
-    New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    Write-Host "$selectedVersion instalado en el puerto $port."
 }
 
 # Menú de selección
