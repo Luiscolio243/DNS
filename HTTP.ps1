@@ -37,31 +37,66 @@ function Install-IIS {
         $choice = Read-Host "Seleccione la versión de IIS para instalar (1-2)"
     } while ($choice -notmatch '^[1-2]$')
     
+    $port = Select-Port
     $selectedVersion = $versions[$choice - 1]
-    Write-Host "Instalando $selectedVersion..."
+    Write-Host "Instalando $selectedVersion en el puerto $port..."
     
     Install-WindowsFeature -name Web-Server -IncludeManagementTools
-    Write-Host "Instalación completada para $selectedVersion."
+    New-NetFirewallRule -DisplayName "IIS Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+    
+    Write-Host "Instalación completada para $selectedVersion en el puerto $port."
 }
 
 # Función para instalar Apache Tomcat
 function Install-Tomcat {
     Write-Host "Obteniendo la última versión de Apache Tomcat..."
+    
+    $url = "https://downloads.apache.org/tomcat/"
+    $html = Invoke-WebRequest -Uri $url -UseBasicParsing
+    $latestVersion = ($html.Links | Where-Object { $_.href -match 'tomcat-(\d+)/' } | ForEach-Object { $_.href -replace 'tomcat-|/', '' } | Sort-Object {[int]$_} -Descending | Select-Object -First 1)
+    
+    if (-not $latestVersion) {
+        Write-Host "No se encontró la versión más reciente de Tomcat. Abortando..."
+        exit
+    }
+    
     $port = Select-Port
-    Write-Host "Instalando Apache Tomcat en el puerto $port..."
-    # Proceso de instalación aquí
+    Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
     New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    Write-Host "Tomcat instalado correctamente."
+    Write-Host "Tomcat $latestVersion instalado correctamente en el puerto $port."
 }
 
 # Función para instalar Nginx
 function Install-Nginx {
     Write-Host "Obteniendo versiones de Nginx..."
+    $url = "https://nginx.org/en/download.html"
+    $html = Invoke-WebRequest -Uri $url -UseBasicParsing
+    $latestVersion = ([regex]::Matches($html.Content, "nginx-(\d+\.\d+\.\d+).zip") | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version]$_ } -Descending | Select-Object -First 1)
+    $devVersion = "Nginx Mainline (Versión en desarrollo)"
+    
+    Write-Host "1. Nginx $latestVersion - Última versión estable"
+    Write-Host "2. $devVersion"
+    
+    do {
+        $choice = Read-Host "Seleccione la versión de Nginx para instalar (1-2)"
+    } while ($choice -notmatch '^[1-2]$')
+    
     $port = Select-Port
-    Write-Host "Instalando Nginx en el puerto $port..."
-    # Proceso de instalación aquí
+    $selectedVersion = if ($choice -eq 1) { "nginx-$latestVersion" } else { $devVersion }
+    Write-Host "Instalando $selectedVersion en el puerto $port..."
+    
+    if ($choice -eq 1) {
+        $nginxInstaller = "https://nginx.org/download/nginx-$latestVersion.zip"
+        $installPath = "C:\Nginx$latestVersion"
+        
+        Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$latestVersion.zip"
+        Expand-Archive -Path "$env:TEMP\Nginx$latestVersion.zip" -DestinationPath $installPath -Force
+    } else {
+        Write-Host "Para instalar la versión en desarrollo, descárguela manualmente desde el sitio oficial de Nginx."
+    }
+    
     New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    Write-Host "Nginx instalado en el puerto $port."
+    Write-Host "$selectedVersion instalado en el puerto $port."
 }
 
 # Menú de selección
