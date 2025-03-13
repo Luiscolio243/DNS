@@ -1,146 +1,104 @@
-
-# Función para obtener versiones de IIS en Windows Server
-function Get-IISVersions {
-    Write-Host "`n🔹 Versiones de IIS disponibles en Windows Server:"
+# Función para instalar IIS con la versión más reciente y la de desarrollo
+function Install-IIS {
+    Write-Host "Obteniendo versiones de IIS..."
     $versions = @(
-        "IIS 10.0 (Windows Server 2016, 2019, 2022)",
-        "IIS 8.5  (Windows Server 2012 R2)",
-        "IIS 8.0  (Windows Server 2012)",
-        "IIS 7.5  (Windows Server 2008 R2)"
+        "IIS 10.0 (Windows Server 2016, 2019, 2022) - Última versión estable",
+        "IIS Insider Preview - Versión en desarrollo"
     )
+    
     for ($i = 0; $i -lt $versions.Count; $i++) {
         Write-Host "$($i+1). $($versions[$i])"
     }
-    return $versions
-}
-
-# Función para instalar IIS según la versión seleccionada
-function Install-IIS {
-    $versions = Get-IISVersions
+    
     do {
-        $choice = Read-Host "Ingrese el número de la versión de IIS que desea instalar"
-        $valid = ($choice -match '^\d+$') -and ($choice -ge 1) -and ($choice -le $versions.Count)
+        $choice = Read-Host "Seleccione la versión de IIS para instalar (1-2)"
+        $valid = ($choice -match '^[1-2]$')
         if (-not $valid) {
             Write-Host "Opción inválida. Intente de nuevo."
         }
     } while (-not $valid)
-
+    
     $selectedVersion = $versions[$choice - 1]
     Write-Host "Instalando $selectedVersion..."
-
-    if ($selectedVersion -match "IIS 10.0") {
-        Install-WindowsFeature -name Web-Server -IncludeManagementTools
-    } else {
-        Write-Host "⚠ No es posible instalar versiones anteriores a IIS 10.0 automáticamente. Debe descargarlas manualmente."
-    }
-
-    Write-Host " Instalación completada para $selectedVersion."
+    
+    Install-WindowsFeature -name Web-Server -IncludeManagementTools
+    Write-Host "Instalación completada para $selectedVersion."
 }
 
-# Función para obtener versiones de XAMPP ordenadas de más nueva a más vieja
-function Get-XAMPPVersions {
-    Write-Host "Obteniendo versiones de XAMPP..."
-    $url = "https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/"
+# Función para instalar Apache Tomcat con la versión más reciente
+function Install-Tomcat {
+    Write-Host "Obteniendo la última versión de Apache Tomcat..."
+    $url = "https://downloads.apache.org/tomcat/"
     $html = Invoke-WebRequest -Uri $url -UseBasicParsing
-    $versions = $html.Links | Where-Object { $_.href -match 'XAMPP%20Windows/(\d+\.\d+\.\d+)/' } | ForEach-Object { $_.href -replace 'XAMPP%20Windows/|/', '' }
-    $versions = $versions | Sort-Object { [version]$_ } -Descending
-    return $versions
-}
-
-# Función para instalar XAMPP
-function Install-XAMPP {
-    $versions = Get-XAMPPVersions
-    if ($versions.Count -eq 0) {
-        Write-Host " No se encontraron versiones de XAMPP disponibles. Abortando..."
+    $latestVersion = ($html.Links | Where-Object { $_.href -match 'tomcat-(\d+)/' } | ForEach-Object { $_.href -replace 'tomcat-|/', '' } | Sort-Object {[int]$_} -Descending | Select-Object -First 1)
+    
+    if (-not $latestVersion) {
+        Write-Host "No se encontró la versión más reciente de Tomcat. Abortando..."
         exit
     }
-
-    $selectedVersion = Select-Version $versions
-    Write-Host "Instalando XAMPP versión $selectedVersion..."
-    $xamppInstaller = "https://sourceforge.net/projects/xampp/files/XAMPP%20Windows/$selectedVersion/xampp-windows-x64-$selectedVersion.exe/download"
-    $installPath = "C:\xampp$selectedVersion"
-
-    Write-Host "Descargando XAMPP desde $xamppInstaller..."
-    Invoke-WebRequest -Uri $xamppInstaller -OutFile "$env:TEMP\xampp$selectedVersion.exe"
-
-    Write-Host "Ejecutando el instalador de XAMPP..."
-    Start-Process -FilePath "$env:TEMP\xampp$selectedVersion.exe" -ArgumentList "/S /D=$installPath" -Wait
-
-    Write-Host " XAMPP instalado correctamente en $installPath."
+    
+    $port = Select-Port
+    Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
+    $tomcatInstaller = "https://downloads.apache.org/tomcat/tomcat-$latestVersion/bin/apache-tomcat-$latestVersion-windows-x64.zip"
+    $installPath = "C:\Tomcat$latestVersion"
+    
+    Invoke-WebRequest -Uri $tomcatInstaller -OutFile "$env:TEMP\Tomcat$latestVersion.zip"
+    Expand-Archive -Path "$env:TEMP\Tomcat$latestVersion.zip" -DestinationPath $installPath -Force
+    
+    New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+    
+    Write-Host "Tomcat instalado correctamente en $installPath."
 }
 
-# Función para obtener versiones de Nginx ordenadas de más nueva a más vieja
-function Get-NginxVersions {
+# Función para instalar Nginx con la versión más reciente y la de desarrollo
+function Install-Nginx {
     Write-Host "Obteniendo versiones de Nginx..."
     $url = "https://nginx.org/en/download.html"
     $html = Invoke-WebRequest -Uri $url -UseBasicParsing
-    $matches = [regex]::Matches($html.Content, "nginx-(\d+\.\d+\.\d+).zip") | ForEach-Object { $_.Groups[1].Value }
-    $versions = $matches | Sort-Object { [version]$_ } -Descending
-    return $versions
-}
-
-# Función para instalar Nginx
-function Install-Nginx {
-    $versions = Get-NginxVersions
-    if ($versions.Count -eq 0) {
-        Write-Host " No se encontraron versiones de Nginx disponibles. Abortando..."
-        exit
-    }
-
-    $selectedVersion = Select-Version $versions
-    $port = Select-Port
-
-    Write-Host "Instalando Nginx versión $selectedVersion en el puerto $port..."
-    $nginxInstaller = "https://nginx.org/download/nginx-$selectedVersion.zip"
-    $installPath = "C:\Nginx$selectedVersion"
-
-    Write-Host "Descargando Nginx desde $nginxInstaller..."
-    Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$selectedVersion.zip"
-
-    Write-Host "Instalando Nginx en $installPath..."
-    Expand-Archive -Path "$env:TEMP\Nginx$selectedVersion.zip" -DestinationPath $installPath -Force
-
-    Write-Host "Configurando Firewall para permitir el puerto $port..."
-    New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-
-    Write-Host " Nginx instalado en el puerto $port."
-}
-
-# Función para seleccionar una versión de un servicio
-function Select-Version {
-    param ($versions)
-    Write-Host "Seleccione una versión:"
-    for ($i = 0; $i -lt $versions.Count; $i++) {
-        Write-Host "$($i+1). $($versions[$i])"
-    }
+    $latestVersion = ([regex]::Matches($html.Content, "nginx-(\d+\.\d+\.\d+).zip") | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version]$_ } -Descending | Select-Object -First 1)
+    $devVersion = "Nginx Mainline (Versión en desarrollo)"
+    
+    Write-Host "1. Nginx $latestVersion - Última versión estable"
+    Write-Host "2. $devVersion"
+    
     do {
-        $choice = Read-Host "Ingrese el número de la versión"
-        $valid = ($choice -match '^\d+$') -and ($choice -ge 1) -and ($choice -le $versions.Count)
+        $choice = Read-Host "Seleccione la versión de Nginx para instalar (1-2)"
+        $valid = ($choice -match '^[1-2]$')
         if (-not $valid) {
             Write-Host "Opción inválida. Intente de nuevo."
         }
     } while (-not $valid)
-    return $versions[$choice - 1]
+    
+    $selectedVersion = if ($choice -eq 1) { "nginx-$latestVersion" } else { $devVersion }
+    $port = Select-Port
+    
+    Write-Host "Instalando $selectedVersion en el puerto $port..."
+    if ($choice -eq 1) {
+        $nginxInstaller = "https://nginx.org/download/nginx-$latestVersion.zip"
+        $installPath = "C:\Nginx$latestVersion"
+        
+        Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$latestVersion.zip"
+        Expand-Archive -Path "$env:TEMP\Nginx$latestVersion.zip" -DestinationPath $installPath -Force
+    } else {
+        Write-Host "Para instalar la versión en desarrollo, descárguela manualmente desde el sitio oficial de Nginx."
+    }
+    
+    New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+    Write-Host "Nginx instalado en el puerto $port."
 }
 
-# Función para seleccionar un puerto
-function Select-Port {
-    do {
-        $port = Read-Host "Ingrese el puerto en el que desea configurar el servicio"
-        $valid = ($port -match '^\d+$') -and ($port -ge 1) -and ($port -le 65535)
-        if (-not $valid) {
-            Write-Host "El puerto debe ser un número entre 1 y 65535. Intente de nuevo."
-        }
-    } while (-not $valid)
-    return $port
-}
+# Instalar MySQL automáticamente
+Install-MySQL
 
-# Menú de selección con opción de salir
-do {
+# Instalar C++ Redistributables automáticamente
+Install-CppRedistributables
+
+# Menú de selección
+Do {
     Write-Host "`n¿Qué desea instalar?"
-    Write-Host "1. Instalar IIS (Seleccionar versión)"
-    Write-Host "2. Instalar XAMPP (Seleccionar versión)"
-    Write-Host "3. Instalar Nginx (Seleccionar versión y puerto)"
+    Write-Host "1. Instalar IIS (Última versión y versión en desarrollo)"
+    Write-Host "2. Instalar Apache Tomcat (Última versión)"
+    Write-Host "3. Instalar Nginx (Última versión o versión en desarrollo)"
     Write-Host "4. Salir"
 
     do {
@@ -153,7 +111,7 @@ do {
 
     switch ($option) {
         "1" { Install-IIS }
-        "2" { Install-XAMPP }
+        "2" { Install-Tomcat }
         "3" { Install-Nginx }
         "4" { Write-Host "Saliendo del script. ¡Hasta luego!"; exit }
     }

@@ -1,118 +1,90 @@
-# Función para instalar IIS con la versión más reciente y la de desarrollo
-function Install-IIS {
-    Write-Host "Obteniendo versiones de IIS..."
-    $versions = @(
-        "IIS 10.0 (Windows Server 2016, 2019, 2022) - Última versión estable",
-        "IIS Insider Preview - Versión en desarrollo"
-    )
+#!/bin/bash
+
+obtener_versiones() {
+    local servicio="$1"
+    local url="$2"
     
-    for ($i = 0; $i -lt $versions.Count; $i++) {
-        Write-Host "$($i+1). $($versions[$i])"
-    }
-    
-    do {
-        $choice = Read-Host "Seleccione la versión de IIS para instalar (1-2)"
-        $valid = ($choice -match '^[1-2]$')
-        if (-not $valid) {
-            Write-Host "Opción inválida. Intente de nuevo."
-        }
-    } while (-not $valid)
-    
-    $selectedVersion = $versions[$choice - 1]
-    Write-Host "Instalando $selectedVersion..."
-    
-    Install-WindowsFeature -name Web-Server -IncludeManagementTools
-    Write-Host "Instalación completada para $selectedVersion."
+    echo "Obteniendo versiones disponibles de $servicio..."
+
+    # Descargar el HTML de la página
+    contenido=$(curl -s "$url" || wget -qO- "$url")
+
+    # Extraer versiones dependiendo del servicio
+    case $servicio in
+        "Apache")
+            # Busca solo versiones que tienen paquetes tar.gz (Linux)
+            versiones=( $(echo "$contenido" | grep -oP 'httpd-\d+\.\d+\.\d+(?=\.tar\.gz")' | sed 's/httpd-//' | sort -V | uniq) )
+            ;;
+        "Tomcat")
+            # Busca versiones Tomcat que tengan archivos tar.gz (para Linux)
+            versiones=( $(echo "$contenido" | grep -oP '(?<=href="v)[0-9]+\.[0-9]+\.[0-9]+(?=/")' | sort -V | uniq) )
+            ;;
+        "Nginx")
+            # Busca versiones de Nginx que sean tar.gz (para Linux)
+            versiones=( $(echo "$contenido" | grep -oP 'nginx-\d+\.\d+\.\d+(?=\.tar\.gz")' | sed 's/nginx-//' | sort -V | uniq) )
+            ;;
+    esac
+
+    # Verificar si hay versiones disponibles
+    if [ ${#versiones[@]} -eq 0 ]; then
+        echo "No se encontraron versiones para Linux en $servicio."
+        exit 1
+    fi
+
+    # Mostrar versiones en orden de la más antigua a la más nueva
+    echo "Seleccione la versión de $servicio (solo Linux) de la más antigua a la más nueva:"
+    select version in "${versiones[@]}"; do
+        if [[ -n "$version" ]]; then
+            echo "Seleccionó la versión $version"
+            break
+        else
+            echo "Opción inválida. Intente de nuevo."
+        fi
+    done
 }
 
-# Función para instalar Apache Tomcat con la versión más reciente
-function Install-Tomcat {
-    Write-Host "Obteniendo la última versión de Apache Tomcat..."
-    $url = "https://downloads.apache.org/tomcat/"
-    $html = Invoke-WebRequest -Uri $url -UseBasicParsing
-    $latestVersion = ($html.Links | Where-Object { $_.href -match 'tomcat-(\d+)/' } | ForEach-Object { $_.href -replace 'tomcat-|/', '' } | Sort-Object {[int]$_} -Descending | Select-Object -First 1)
-    
-    if (-not $latestVersion) {
-        Write-Host "No se encontró la versión más reciente de Tomcat. Abortando..."
-        exit
-    }
-    
-    $port = Select-Port
-    Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
-    $tomcatInstaller = "https://downloads.apache.org/tomcat/tomcat-$latestVersion/bin/apache-tomcat-$latestVersion-windows-x64.zip"
-    $installPath = "C:\Tomcat$latestVersion"
-    
-    Invoke-WebRequest -Uri $tomcatInstaller -OutFile "$env:TEMP\Tomcat$latestVersion.zip"
-    Expand-Archive -Path "$env:TEMP\Tomcat$latestVersion.zip" -DestinationPath $installPath -Force
-    
-    New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    
-    Write-Host "Tomcat instalado correctamente en $installPath."
+# Función para instalar Apache
+instalar_apache() {
+    obtener_versiones "Apache" "https://downloads.apache.org/httpd/"
+    read -p "Ingrese el puerto en el que desea configurar Apache: " puerto
+    sudo apt update && sudo apt install -y apache2
+    sudo sed -i "s/Listen 80/Listen $puerto/g" /etc/apache2/ports.conf
+    sudo systemctl restart apache2
+    echo "Apache instalado y configurado en el puerto $puerto."
 }
 
-# Función para instalar Nginx con la versión más reciente y la de desarrollo
-function Install-Nginx {
-    Write-Host "Obteniendo versiones de Nginx..."
-    $url = "https://nginx.org/en/download.html"
-    $html = Invoke-WebRequest -Uri $url -UseBasicParsing
-    $latestVersion = ([regex]::Matches($html.Content, "nginx-(\d+\.\d+\.\d+).zip") | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version]$_ } -Descending | Select-Object -First 1)
-    $devVersion = "Nginx Mainline (Versión en desarrollo)"
-    
-    Write-Host "1. Nginx $latestVersion - Última versión estable"
-    Write-Host "2. $devVersion"
-    
-    do {
-        $choice = Read-Host "Seleccione la versión de Nginx para instalar (1-2)"
-        $valid = ($choice -match '^[1-2]$')
-        if (-not $valid) {
-            Write-Host "Opción inválida. Intente de nuevo."
-        }
-    } while (-not $valid)
-    
-    $selectedVersion = if ($choice -eq 1) { "nginx-$latestVersion" } else { $devVersion }
-    $port = Select-Port
-    
-    Write-Host "Instalando $selectedVersion en el puerto $port..."
-    if ($choice -eq 1) {
-        $nginxInstaller = "https://nginx.org/download/nginx-$latestVersion.zip"
-        $installPath = "C:\Nginx$latestVersion"
-        
-        Invoke-WebRequest -Uri $nginxInstaller -OutFile "$env:TEMP\Nginx$latestVersion.zip"
-        Expand-Archive -Path "$env:TEMP\Nginx$latestVersion.zip" -DestinationPath $installPath -Force
-    } else {
-        Write-Host "Para instalar la versión en desarrollo, descárguela manualmente desde el sitio oficial de Nginx."
-    }
-    
-    New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
-    Write-Host "Nginx instalado en el puerto $port."
+# Función para instalar Tomcat
+instalar_tomcat() {
+    obtener_versiones "Tomcat" "https://downloads.apache.org/tomcat/"
+    read -p "Ingrese el puerto en el que desea configurar Tomcat: " puerto
+    sudo apt update && sudo apt install -y tomcat9
+    sudo sed -i "s/port=\"8080\"/port=\"$puerto\"/g" /etc/tomcat9/server.xml
+    sudo systemctl restart tomcat9
+    echo "Tomcat instalado y configurado en el puerto $puerto."
 }
 
-# Instalar MySQL automáticamente
-Install-MySQL
+# Función para instalar Nginx
+instalar_nginx() {
+    obtener_versiones "Nginx" "http://nginx.org/download/"
+    read -p "Ingrese el puerto en el que desea configurar Nginx: " puerto
+    sudo apt update && sudo apt install -y nginx
+    sudo sed -i "s/listen 80;/listen $puerto;/g" /etc/nginx/sites-available/default
+    sudo systemctl restart nginx
+    echo "Nginx instalado y configurado en el puerto $puerto."
+}
 
-# Instalar C++ Redistributables automáticamente
-Install-CppRedistributables
+# Menú de selección de servicio
+echo "¿Qué servicio desea instalar?"
+echo "1.- Apache"
+echo "2.- Tomcat"
+echo "3.- Nginx"
+echo "4.- Salir"
+read -p "Seleccione una opción (1-4): " choice
 
-# Menú de selección
-Do {
-    Write-Host "`n¿Qué desea instalar?"
-    Write-Host "1. Instalar IIS (Última versión y versión en desarrollo)"
-    Write-Host "2. Instalar Apache Tomcat (Última versión)"
-    Write-Host "3. Instalar Nginx (Última versión o versión en desarrollo)"
-    Write-Host "4. Salir"
-
-    do {
-        $option = Read-Host "Seleccione una opción (1-4)"
-        $valid = $option -match '^[1-4]$'
-        if (-not $valid) {
-            Write-Host "Opción inválida. Intente de nuevo."
-        }
-    } while (-not $valid)
-
-    switch ($option) {
-        "1" { Install-IIS }
-        "2" { Install-Tomcat }
-        "3" { Install-Nginx }
-        "4" { Write-Host "Saliendo del script. ¡Hasta luego!"; exit }
-    }
-} while ($true)
+case $choice in
+    1) instalar_apache ;;
+    2) instalar_tomcat ;;
+    3) instalar_nginx ;;
+    4) echo "Saliendo..."; exit 0 ;;
+    *) echo "Opción inválida. Saliendo..."; exit 1 ;;
+esac
