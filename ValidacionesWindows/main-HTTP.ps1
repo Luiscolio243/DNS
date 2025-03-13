@@ -1,65 +1,67 @@
 #HTTP   
 
-. "C:\Users\Administrator\Desktop\ValidacionesWindows\modulohttp.psm1"
+Import-Module "C:\Users\Administrador\Desktop\validacionesWindows\modulohttp.psm1"
 
 # Verifica si el script se está ejecutando como Administrador
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Output "Este script debe ejecutarse como Administrador."
+    Write-Host "Este script debe ejecutarse como Administrador." -ForegroundColor Red
     exit
 }
 
 while ($true) {
-    mostrarMenuHTTP
-    $op = Read-Host "Elija el servicio HTTP que desea configurar (1-3):"
+    menu_http
+    $op = Read-Host "Seleccione el servicio HTTP que queria instalar y configurar: "
 
     switch ($op) {
         "1" {
-            $port = obtenerPuerto "Ingresa el puerto que desea utilizar para el servicio IIS:"
+            $port = solicitar_puerto "Ingresa el puerto para el servicio IIS:"
             if ([string]::IsNullOrEmpty($port)){
                 continue
             }
-            configurarIIS -puerto "$port"
+            conf_IIS -port "$port"
         }
         "2" {
-            $version = descargarApache
-            $op2 = Read-Host "Selecciona 1 para instalar Apache"
+            $version= obtener_apache
+            $op2 = Read-Host "1 para instalar Apache o cualquier otro para regresar"
             if ($op2 -eq "1") {
-                $port = obtenerPuerto "Ingresa el puerto que desea utilizar para el servicio Apache:"
+                $port = solicitar_puerto "Ingresa el puerto:"
                 if ([string]::IsNullOrEmpty($port)){
                     continue
                 }
-                configurarApache -puerto $port -version "$version"
+                conf_apache -port $port -version "$version"
             } else {
-                Write-Output "Regresando al menú principal."
+                Write-Host "Regresando..." -ForegroundColor Yellow
             }
         }
         "3" {
-            $version = descargarNginx
-            mostrarMenuHTTP2 "Nginx" $version.estable $version.mainline
-            $op2 = Read-Host "Seleccione una opción (1-3):"
+            $version= obtener_nginx
+            menu_http2 "Nginx" $version.stable $version.mainline
+            $op2 = Read-Host "Seleccione una opcion:"
             if ($op2 -eq "1"){
-                $port = obtenerPuerto "Ingresa el puerto que desea utilizar para el servicio Nginx"
+                $port = solicitar_puerto "Ingresa el puerto:"
                 if ([string]::IsNullOrEmpty($port)){
                     continue
                 }
-                configurarNginx -puerto $port -version $version.estable
+                conf_nginx -port $port -version $version.stable
             } elseif ($op2 -eq "2"){
-                $port = obtenerPuerto "Ingresa el puerto para Nginx (1024-65535)"
+                $port = solicitar_puerto "Ingresa el puerto:"
                 if ([string]::IsNullOrEmpty($port)){
                     continue
                 }
-                configurarNginx -puerto $port -version $version.mainline
+                conf_nginx -port $port -version $version.mainline
             } elseif ($op2 -eq "3"){
-                Write-Output "Regresando al menú principal."
+                Write-Host "Regresando..." -ForegroundColor Yellow
             } else {
-                Write-Output "Opción no válida. Regresando al menú principal."
+                Write-Host "Opcion no valida. Regresando al menu..." -ForegroundColor Yellow
             }
         }
         "4" {
             exit
         }
         default {
-            Write-Output "Opción no válida."
+            Write-Host "Opcion no valida." -ForegroundColor Red
         }
     }
+
+
 }
