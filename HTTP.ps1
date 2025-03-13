@@ -37,16 +37,16 @@ function Install-IIS {
         $choice = Read-Host "Seleccione la versión de IIS para instalar (1-2)"
     } while ($choice -notmatch '^[1-2]$')
     
-    $port = Select-Port
     $selectedVersion = $versions[$choice - 1]
-    Write-Host "Instalando $selectedVersion en el puerto $port..."
+    $port = Select-Port
     
     if (Is-PortAvailable -port $port) {
+        Write-Host "Instalando $selectedVersion en el puerto $port..."
         Install-WindowsFeature -name Web-Server -IncludeManagementTools
         New-NetFirewallRule -DisplayName "IIS Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
         Write-Host "Instalación completada para $selectedVersion en el puerto $port."
     } else {
-        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
+        Write-Host "Error: El puerto $port ya está en uso. No se instalará IIS." -ForegroundColor Red
     }
 }
 
@@ -64,12 +64,13 @@ function Install-Tomcat {
     }
     
     $port = Select-Port
-    Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
+    
     if (Is-PortAvailable -port $port) {
+        Write-Host "Instalando Apache Tomcat versión $latestVersion en el puerto $port..."
         New-NetFirewallRule -DisplayName "Tomcat Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
         Write-Host "Tomcat $latestVersion instalado correctamente en el puerto $port."
     } else {
-        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
+        Write-Host "Error: El puerto $port ya está en uso. No se instalará Tomcat." -ForegroundColor Red
     }
 }
 
@@ -88,15 +89,15 @@ function Install-Nginx {
         $choice = Read-Host "Seleccione la versión de Nginx para instalar (1-2)"
     } while ($choice -notmatch '^[1-2]$')
     
-    $port = Select-Port
     $selectedVersion = if ($choice -eq 1) { "nginx-$latestVersion" } else { $devVersion }
-    Write-Host "Instalando $selectedVersion en el puerto $port..."
+    $port = Select-Port
     
     if (Is-PortAvailable -port $port) {
+        Write-Host "Instalando $selectedVersion en el puerto $port..."
         New-NetFirewallRule -DisplayName "Nginx Port $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
         Write-Host "$selectedVersion instalado en el puerto $port."
     } else {
-        Write-Host "Error: El puerto $port ya está en uso. Instalación cancelada." -ForegroundColor Red
+        Write-Host "Error: El puerto $port ya está en uso. No se instalará Nginx." -ForegroundColor Red
     }
 }
 
