@@ -5,7 +5,7 @@ source "./instalar_dependenciashttp.sh"
 conf_litespeed(){
     local port="$1"
     local version="$2"
-    echo "Descargando OpenLiteSpeed $version"
+    #echo "Descargando OpenLiteSpeed $version"
 
     cd /tmp
     # Variable URL para descargar la version
@@ -42,7 +42,7 @@ conf_litespeed(){
 conf_apache(){
     local port="$1"
     local version="$2"
-    echo "Descargando Apache $version"
+    #echo "Descargando Apache $version"
 
     #Descargar e instalar la versión seleccionada
     cd /tmp
@@ -71,7 +71,7 @@ conf_apache(){
 conf_nginx(){
     local port="$1"
     local version="$2"
-    echo "Descargando Nginx $version"
+    #echo "Descargando Nginx $version"
 
     #Descargar e instalar la versión seleccionada
     cd /tmp

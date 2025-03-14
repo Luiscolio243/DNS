@@ -1,10 +1,10 @@
 #!/bin/bash
 menu_http(){
-    echo "= MENU HTTP ="
-    echo "1. Apache"
-    echo "2. OpenLiteSpeed"
-    echo "3. Nginx"
-    echo "4. Salir"
+    echo "HTTP "
+    echo "1 Nginx"
+    echo "2 Apache"
+    echo "3 OpenLiteSpeed"
+    echo "4 Salir"
 }
 
 menu_http2(){
@@ -14,14 +14,14 @@ menu_http2(){
     echo "$service"
     
     if [ "$service" = "Apache" ]; then
-        echo "1. Versión estable $stable"
-        echo "2. Regresar"
+        echo "1 Versión estable $stable"
+        echo "2 Regresar"
     elif [ "$service" = "Nginx" ] || [ "$service" = "OpenLiteSpeed" ]; then
-        echo "1. Versión estable $stable"
-        echo "2. Versión de desarrollo $mainline"
-        echo "3. Regresar"
+        echo "1 Versión estable $stable"
+        echo "2 Versión de desarrollo $mainline"
+        echo "3 Regresar"
     else 
-        echo "Opción no válida"
+        echo "No es valido"
         exit 1
     fi
 }

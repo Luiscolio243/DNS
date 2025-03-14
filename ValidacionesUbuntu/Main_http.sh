@@ -15,13 +15,13 @@ sudo apt install net-tools -y > /dev/null 2>&1
 
 while true; do
     menu_http
-    read -p "Seleccione el servicio HTTP que queria instalar y configurar: " op
+    read -p "Seleccione un servicio HTTP : " op
             
-    if [ "$op" -eq 1 ]; then
+    if [ "$op" -eq 2 ]; then
         versions=$(obtener_version "Apache")
         stable=$(echo "$versions" | head -1)
         menu_http2 "Apache" "$stable" " "
-        echo "Elija una version: "
+        echo "Seleccione una version: "
         op2=$(solicitar_ver "Apache") 
         if [ "$op2" -eq 1 ]; then
             port=$(solicitar_puerto)
@@ -32,12 +32,12 @@ while true; do
         elif [ "$op2" -eq 2 ]; then
             continue
         fi
-    elif [ "$op" -eq 3 ]; then
+    elif [ "$op" -eq 1 ]; then
         versions=$(obtener_version "Nginx")
         stable=$(echo "$versions" | tail -n 2 | head -1)
         mainline=$(echo "$versions" | tail -1)
         menu_http2 "Nginx" "$stable" "$mainline"
-        echo "Elija una version: "
+        echo "Seleccione una version: "
         op2=$(solicitar_ver "Nginx")
         if [ "$op2" -eq 1 ]; then  
             port=$(solicitar_puerto)
@@ -54,12 +54,12 @@ while true; do
         elif [ "$op2" -eq 3 ]; then
             continue
         fi
-    elif [ "$op" -eq 2 ]; then
+    elif [ "$op" -eq 3 ]; then
         versions=$(obtener_version "OpenLiteSpeed")
         stable=$(echo "$versions" | tail -n 2 | head -1)
         mainline=$(echo "$versions" | tail -1)
         menu_http2 "OpenLiteSpeed" "$stable" "$mainline"
-        echo "Elija una version: "
+        echo "Seleccione una version: "
         op2=$(solicitar_ver "OpenLiteSpeed")
         if [ "$op2" -eq 1 ]; then
             port=$(solicitar_puerto)
