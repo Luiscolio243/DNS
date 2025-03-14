@@ -14,11 +14,11 @@ solicitar_puerto() {
 
         # Verificar si el puerto está en la lista de reservados
         elif [[ " ${puertos_reservados[*]} " =~ " $port " ]]; then
-            echo "Puerto $port está reservado para otro servicio" >&2
+            echo "Puerto $port está reservado" >&2
 
         # Verificar si el puerto ya está en uso con ss
         elif ss -tuln | grep -q ":$port "; then
-            echo "Puerto $port ya está en uso" >&2
+            echo "Puerto $port lo estan usando" >&2
 
         else 
             echo "$port"

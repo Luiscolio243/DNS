@@ -14,7 +14,7 @@ solicitar_ver() {
             echo "$ver"  # Solo devuelve la opción válida
             return
         else
-            echo "Opción no válida. Intenta de nuevo." >&2  
+            echo "No es valido" >&2  
         fi
     done
 }
