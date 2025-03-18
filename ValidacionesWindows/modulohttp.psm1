@@ -196,7 +196,7 @@ function conf_apache {
             Start-Process -FilePath $exeApache -ArgumentList '-k', 'install', '-n', 'Apache24' -NoNewWindow -Wait
             Write-Host "Iniciando Apache..." -ForegroundColor Green
             Start-Service -Name "Apache24"
-            Write-Host "Apache instalado y ejecutándose correctamente en el puerto $port" -ForegroundColor Green
+            Write-Host "Apache instalado y ejecutándose correctamente en el puerto $:port" -ForegroundColor Green
 
             # Habilitar el puerto en el firewall al final de la instalación
             New-NetFirewallRule -DisplayName "Abrir Puerto $port" -Direction Inbound -Protocol TCP -LocalPort $port -Action Allow
