@@ -99,3 +99,6 @@ sudo wget -P /srv/ftp/windows/Nginx https://nginx.org/download/nginx-1.26.3.zip
 
 
 sudo wget -P /srv/ftp/windows/Apache/ https://www.apachelounge.com/download/VS17/binaries/httpd-2.4.63-250207-win64-VS17.zip
+
+
+sudo wget --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -P /srv/ftp/windows/Apache/ "https://www.apachelounge.com/download/VS17/binaries/httpd-2.4.63-250207-win64-VS17.zip"
