@@ -2,9 +2,21 @@ source gestionar_usuarios.sh
 source crear_usuario.sh
 source cambiar_grupo.sh
 
+while true; do
+    read -p "¿Desea habilitar SSL para vsftpd? (s/n): " ssl_choice
+    ssl_choice=${ssl_choice,,}  # Convertir a minúsculas
+
+    if [[ "$ssl_choice" == "s" || "$ssl_choice" == "n" ]]; then
+        break  # Salir del bucle si la entrada es válida
+    else
+        echo "Error: Solo se permite 's' o 'n'. Inténtelo de nuevo."
+    fi
+done
+
+
 # Aplicar configuración de red y FTP
 bash configurar_ip.sh
-bash configuracion_ftp.sh
+bash configuracion_ftp.sh "$ssl_choice"
 
 while true; do
     echo -e "\n=== Menú FTP ==="
