@@ -2,10 +2,22 @@
 source "./variables_http.sh"
 source "./instalar_dependenciashttp.sh"
 
+crear_certificado_ssl() {
+    local ip="$1"
+    local cert_dir="/etc/ssl/localcerts"
+    
+    sudo mkdir -p "$cert_dir"
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$cert_dir/selfsigned.key" \
+        -out "$cert_dir/selfsigned.crt" \
+        -subj "/CN=$ip"
+}
+
 conf_litespeed(){
     local port="$1"
     local version="$2"
-    #echo "Descargando OpenLiteSpeed $version"
+    local ip="192.168.1.10"
+    echo "Descargando OpenLiteSpeed $version"
 
     cd /tmp
     # Variable URL para descargar la version
@@ -37,12 +49,27 @@ conf_litespeed(){
     
     # Reniciar el servicio
     sudo /usr/local/lsws/bin/lswsctrl restart
+
+    if [[ "$ssl" == "s" ]]; then
+        crear_certificado_ssl "$ip"
+        sudo tee -a /usr/local/lsws/conf/httpd_config.conf > /dev/null <<EOL
+listener SSL {
+    address *:$port
+    secure 1
+    map Example *
+    keyFile /etc/ssl/localcerts/selfsigned.key
+    certFile /etc/ssl/localcerts/selfsigned.crt
+}
+EOL
+        sudo /usr/local/lsws/bin/lswsctrl restart
+    fi
 }
 
 conf_apache(){
     local port="$1"
     local version="$2"
-    #echo "Descargando Apache $version"
+    local ip="192.168.1.10"
+    echo "Descargando Apache $version"
 
     #Descargar e instalar la versión seleccionada
     cd /tmp
@@ -66,12 +93,29 @@ conf_apache(){
     #Reiniciar Apache
     sudo /usr/local/apache2/bin/apachectl start 
     sudo ufw allow $port/tcp
+
+    if [[ "$ssl" == "s" ]]; then 
+        sudo sed -i 's|^#LoadModule ssl_module modules/mod_ssl.so|LoadModule ssl_module modules/mod_ssl.so|' /usr/local/apache2/conf/httpd.conf
+        crear_certificado_ssl "$ip"
+        sudo tee /usr/local/apache2/conf/extra/httpd-ssl.conf > /dev/null <<EOL
+<VirtualHost *:$port>
+    ServerName $ip
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/localcerts/selfsigned.crt
+    SSLCertificateKeyFile /etc/ssl/localcerts/selfsigned.key
+</VirtualHost>
+EOL
+        sudo sed -i "s|#Include conf/extra/httpd-ssl.conf|Include conf/extra/httpd-ssl.conf|" /usr/local/apache2/conf/httpd.conf
+        sudo /usr/local/apache2/bin/apachectl restart
+    fi
 }
 
 conf_nginx(){
     local port="$1"
     local version="$2"
-    #echo "Descargando Nginx $version"
+    local ssl="$3"
+    local ip="192.168.1.10"
+    echo "Descargando Nginx $version"
 
     #Descargar e instalar la versión seleccionada
     cd /tmp
@@ -94,4 +138,23 @@ conf_nginx(){
     sudo /usr/local/nginx/sbin/nginx 
     sudo ufw allow $port/tcp
 
+    if [[ "$ssl" == "s" ]]; then
+        crear_certificado_ssl "$ip"
+        sudo tee /usr/local/nginx/conf/nginx.conf > /dev/null <<EOL
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen $port ssl;
+        server_name $ip;
+
+        ssl_certificate /etc/ssl/localcerts/selfsigned.crt;
+        ssl_certificate_key /etc/ssl/localcerts/selfsigned.key;
+    }
+}
+EOL
+    sudo /usr/local/nginx/sbin/nginx -s reload
+    fi
 }
