@@ -95,3 +95,7 @@ sudo wget -P /srv/ftp/ubuntu/OpenLiteSpeed/ https://openlitespeed.org/packages/o
 #Nginx para Windows
 sudo wget -P /srv/ftp/windows/Nginx https://nginx.org/download/nginx-1.27.4.zip
 sudo wget -P /srv/ftp/windows/Nginx https://nginx.org/download/nginx-1.26.3.zip
+
+
+
+sudo wget -P /srv/ftp/windows/Apache/ https://www.apachelounge.com/download/VS17/binaries/httpd-2.4.63-250207-win64-VS17.zip
