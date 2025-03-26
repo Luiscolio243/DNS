@@ -16,26 +16,26 @@ function solicitar_puerto {
 
             # Validar rango permitido
             if ($port -lt 1 -or $port -gt 65535) {
-                Write-Host "El puerto debe estar entre 1 y 65535." -ForegroundColor Red
+                Write-Host "El puerto debe estar entre 1 y 65535." 
                 continue
             }
 
             # Verificar si el puerto está en uso
             if (netstat -an | Select-String ":$port " | Where-Object { $_ -match "LISTENING" }) {
-                Write-Host "El puerto $port ya está en uso" -ForegroundColor Yellow
+                Write-Host "El puerto $port lo estan usando" 
                 continue
             }
 
             # Verificar si el puerto está en la lista de restringidos
             if ($port -in $ports_restricted){
-                Write-Host "El puerto $port está restringido" -ForegroundColor Yellow
+                Write-Host "El puerto $port está reservado"
                 continue
             }
 
             # Si pasa todas las validaciones, devolver el puerto
             return $port
         } else {
-            Write-Host "Ingresa un número válido." -ForegroundColor Red
+            Write-Host "Ingresa un número válido."
         }
     }
 }
@@ -43,7 +43,7 @@ function solicitar_puerto {
 function conf_IIS {
     param( [string]$port )
     
-    Write-Host "Configurando IIS... " -ForegroundColor Green
+    Write-Host "Iniciando la configuracion IIS" 
 
     # Instalar IIS si no está instalado
     if (-not (Get-WindowsFeature -Name Web-Server).Installed) {
@@ -59,10 +59,36 @@ function conf_IIS {
     # Remover el binding HTTP existente en el puerto 80
     Remove-WebBinding -Name "Default Web Site" -Protocol "http" -Port 80 -ErrorAction SilentlyContinue
 
-    # Agregar un nuevo binding con el puerto seleccionado
-    New-WebBinding -Name "Default Web Site" -Protocol "http" -Port $port -IPAddress "*"
+    # Preguntar al usuario si desea agregar SSL
+    do {
+        $sslOption = Read-Host "¿Desea agregar un certificado SSL? (s/n)"
+        $sslOption = $sslOption.ToLower()
+    
+        if ($sslOption -ne 's' -and $sslOption -ne 'n') {
+            Write-Host "Opción inválida. Solo se permite 's' o 'n'." -ForegroundColor Yellow
+        }
+    } while ($sslOption -ne 's' -and $sslOption -ne 'n')
 
-    # Reiniciar IIS para aplicar los cambios
+    # Si elige agregar SSL
+    if ($sslOption -eq 's') {
+        Write-Host "Configurando IIS con SSL..." -ForegroundColor Cyan
+
+        # Crear el certificado
+        $certificado = New-SelfSignedCertificate -DnsName "localhost" -CertStoreLocation "Cert:\LocalMachine\My"
+
+        # Agregar binding HTTPS
+        New-WebBinding -Name "Default Web Site" -Protocol "https" -Port $port -IPAddress "*"
+        $binding = Get-WebBinding -Name "Default Web Site" -Protocol "https"
+        $binding.AddSslCertificate($certificado.Thumbprint, "My")
+    }
+    else {
+        Write-Host "Configurando IIS sin SSL..." -ForegroundColor Cyan
+
+        # Agregar solo binding HTTP
+        New-WebBinding -Name "Default Web Site" -Protocol "http" -Port $port -IPAddress "*"
+    }
+
+    # Reiniciar IIS para aplicar cambios
     iisreset
 }
 
@@ -91,7 +117,7 @@ function menu_http{
     Write-Host "1) IIS"
     Write-Host "2) Apache"
     Write-Host "3) Nginx"
-    Write-Host "4) Salir"
+    Write-Host "4) Regresar"
 }
 
 function menu_http2{
@@ -206,6 +232,77 @@ function conf_apache {
     } catch {
         Write-Host "Error durante la instalación de Apache: $_"
     }
+    do {
+        $sslOptionApache = Read-Host "¿Desea agregar un certificado SSL? (s/n)"
+        $sslOptionApache = $sslOptionApache.ToLower()
+    
+        if ($sslOptionApache -ne 's' -and $sslOptionApache -ne 'n') {
+            Write-Host "Opción inválida. Solo se permite 's' o 'n'." -ForegroundColor Yellow
+        }
+    } while ($sslOptionApache -ne 's' -and $sslOptionApache -ne 'n')
+
+    # Si elige agregar SSL
+    if ($sslOptionApache -eq 's') {
+        Write-Host "Configurando SSL en Apache..." -ForegroundColor Cyan
+
+    # Crear carpeta Certificados
+    if (-not (Test-Path "C:\Apache24\Certificados")) {
+        New-Item -Path "C:\Apache24\Certificados" -ItemType Directory
+        Write-Host "Carpeta 'Certificados' creada."
+    }
+
+    # Crear clave y certificado
+    & openssl genrsa -out "C:\Apache24\Certificados\apache.key" 2048
+    & openssl req -new -x509 -key "C:\Apache24\Certificados\apache.key" -out "C:\Apache24\Certificados\apache.crt" -days 365 -subj "/CN=192.168.1.11"
+    Write-Host "Certificado generado."
+
+    # Crear el contenido del archivo httpd-ssl.conf
+    $sslContent = @"
+#Listen 443
+<VirtualHost *:$Port>
+    ServerName localhost
+    DocumentRoot "C:/Apache24/htdocs"
+
+    SSLEngine on
+    SSLCertificateFile "C:/Apache24/Certificados/apache.crt"
+    SSLCertificateKeyFile "C:/Apache24/Certificados/apache.key"
+
+    <Directory "C:/Apache24/htdocs">
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog "C:/Apache24/logs/error_log"
+    CustomLog "C:/Apache24/logs/access_log" common
+</VirtualHost>
+"@
+
+    Set-Content -Path "C:\Apache24\conf\extra\httpd-ssl.conf" -Value $sslContent
+    Write-Host "Archivo httpd-ssl.conf generado." -ForegroundColor Green
+
+    # Asegurarse que los módulos SSL están activos
+    (Get-Content "C:\Apache24\conf\httpd.conf") -replace '#LoadModule ssl_module modules/mod_ssl.so', 'LoadModule ssl_module modules/mod_ssl.so' |
+        Set-Content "C:\Apache24\conf\httpd.conf"
+    (Get-Content "C:\Apache24\conf\httpd.conf") -replace '#LoadModule socache_shmcb_module modules/mod_socache_shmcb.so', 'LoadModule socache_shmcb_module modules/mod_socache_shmcb.so' |
+        Set-Content "C:\Apache24\conf\httpd.conf"
+    (Get-Content "C:\Apache24\conf\httpd.conf") -replace '#Include conf/extra/httpd-ssl.conf', 'Include conf/extra/httpd-ssl.conf' |
+        Set-Content "C:\Apache24\conf\httpd.conf"
+
+    # Agregar el Include al httpd.conf solo si no existe
+    Add-Content -Path C:\Apache24\conf\httpd.conf -Value "ServerName localhost:$port"
+
+    # Validar la configuración
+    #& "$RutaApache\bin\httpd.exe" -t
+
+    Add-Content -Path "C:\Apache24\conf\httpd.conf" -Value "Include C:\Apache24\conf\extra\httpd-ssl.conf"
+
+    # Reiniciar Apache
+    Restart-Service -Name "Apache24" -Force
+    Write-Host "Apache reiniciado y configurado en HTTPS por el puerto $Port." -ForegroundColor Green
+    }
+    else {
+        Write-Host "No se realizará ninguna configuración SSL. Fin del proceso." -ForegroundColor Yellow
+    }
 
 }
 
@@ -215,7 +312,7 @@ function obtener_nginx {
 
     # Verificar si se encontraron versiones
     if (-not $versions) {
-        Write-Host "ERROR: No se encontraron versiones de NGINX disponibles en la página."
+        Write-Host "No se encontraron versiones NGINX"
         return $null
     }
 
@@ -284,6 +381,115 @@ function conf_nginx{
     Get-Process -Name nginx
     #Habilitar el puerto en el fireall
     New-NetFirewallRule -DisplayName "Nginx $port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port
+    do {
+        $sslOptionNginx = Read-Host "¿Desea agregar un certificado SSL? (s/n)"
+        $sslOptionNginx = $sslOptionNginx.ToLower()
+    
+        if ($sslOptionNginx -ne 's' -and $sslOptionNginx -ne 'n') {
+            Write-Host "Opción inválida. Solo se permite 's' o 'n'." -ForegroundColor Yellow
+        }
+    } while ($sslOptionNginx -ne 's' -and $sslOptionNginx -ne 'n')
+
+    # Si elige agregar SSL
+    if ($sslOptionNginx -eq 's') {
+        # Crear carpeta SSL si no existe
+        if (!(Test-Path "C:\nginx\ssl")) {
+            New-Item -Path "C:\nginx\ssl" -ItemType Directory
+            Write-Host "Carpeta SSL creada en C:\nginx\ssl"
+        }
+
+        # Generar clave y certificado autofirmado
+        Write-Host "Generando clave privada..."
+        & openssl genrsa -out "C:\nginx\ssl\nginx.key" 2048
+
+        Write-Host "Generando certificado autofirmado..."
+        & openssl req -new -x509 -key "C:\nginx\ssl\nginx.key" -out "C:\nginx\ssl\nginx.crt" -days 365 -subj "/CN=$IP"
+
+        # Bloque SSL para NGINX
+        $nginxConfPath = "C:\nginx\conf\nginx.conf"
+
+# Contenido completo que quieres en el nginx.conf
+$nginxContent = @"
+#user  nobody;
+worker_processes  1;
+
+error_log C:/nginx/logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+
+pid C:/nginx/logs/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    server {
+        listen       $port;
+        server_name  localhost;
+
+        ssl_certificate      C:/nginx/ssl/nginx.crt;
+        ssl_certificate_key  C:/nginx/ssl/nginx.key;
+
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+"@
+
+# SOBREESCRIBE EL ARCHIVO nginx.conf SIN BOM
+[System.IO.File]::WriteAllText($nginxConfPath, $nginxContent, [System.Text.Encoding]::UTF8)
+
+Write-Host "nginx.conf sobreescrito correctamente"
+
+        # Añadir bloque SSL (lo agrega al final de nginx.conf)
+        #Add-Content -Path "C:\nginx\conf\nginx.conf" -Value $sslBlock
+        Write-Host "Bloque SSL agregado a nginx.conf"
+
+        # Verificar configuración de NGINX
+        Write-Host "Verificando configuración NGINX..."
+        cd C:\nginx
+        .\nginx.exe -t
+        .\nginx.exe -s reload
+    }
+    else {
+        
+    }
 }
 
 Export-ModuleMember -Function solicitar_puerto, conf_IIS, menu_http, menu_http2, obtener_apache, conf_apache, obtener_nginx, conf_nginx
