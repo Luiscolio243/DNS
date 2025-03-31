@@ -56,7 +56,7 @@ descargar_y_descomprimir() {
 
     # Detectar carpeta extraída
     dir_extraido=$(tar -tzf "$archivo" | head -1 | cut -f1 -d"/")
-    echo "Descarga y descompresión completadas. Carpeta extraída: $dir_extraido"
+    #echo "Descarga y descompresión completadas. Carpeta extraída: $dir_extraido"
 }
 
 configurar_apache() {
@@ -67,12 +67,12 @@ configurar_apache() {
 
     cd /tmp/httpd-$version || { echo "No se encontró /tmp/httpd-$version"; exit 1; }
 
-    echo "Compilando e instalando Apache..."
+    #echo "Compilando e instalando Apache..."
     ./configure --prefix=/usr/local/apache2 --enable-so --enable-mods-shared=all --enable-ssl > /dev/null 2>&1
     make > /dev/null 2>&1
     sudo make install > /dev/null 2>&1
 
-    echo "Configurando el puerto $port en Apache..."
+    #echo "Configurando el puerto $port en Apache..."
     sudo sed -i "s/Listen 80/Listen $port/" /usr/local/apache2/conf/httpd.conf 
     echo "ServerName localhost" | sudo tee -a /usr/local/apache2/conf/httpd.conf 
 
@@ -81,7 +81,7 @@ configurar_apache() {
     sudo ufw allow "$port"/tcp
 
     if [[ "$ssl" == "s" ]]; then
-        echo "Configurando SSL en Apache..."
+        #echo "Configurando SSL en Apache..."
         sudo sed -i 's|^#LoadModule ssl_module modules/mod_ssl.so|LoadModule ssl_module modules/mod_ssl.so|' /usr/local/apache2/conf/httpd.conf
 
         # Genera el certificado SSL
@@ -119,7 +119,7 @@ configurar_openlitespeed() {
     fi
 
     cd "openlitespeed" || exit
-    echo "Instalando OpenLiteSpeed versión $version..."
+    #echo "Instalando OpenLiteSpeed versión $version..."
 
     # Ejecutar el instalador
     sudo bash install.sh > /dev/null 2>&1
@@ -169,7 +169,7 @@ configurar_nginx() {
     local ssl=$3
     local ip="192.168.1.10"  # IP para SSL
 
-    echo "Descomprimiendo y configurando NGINX versión $version..."
+    #echo "Descomprimiendo y configurando NGINX versión $version..."
     cd /tmp || exit 1
 
     # Descomprimir

@@ -12,9 +12,9 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 
 :main_loop
 While ($true) {
-Write-Host "Seleccione el metodo de instalacion:"
-Write-Host "1. HTTP (Servicios)"
-Write-Host "2. FTP (Listar Carpetas)"
+Write-Host "Seleccione su instalacion"
+Write-Host "1. HTTP"
+Write-Host "2. FTP"
 $opcion = Read-Host "Ingrese su opcion"
 
 if ($opcion -eq "1") {
@@ -88,18 +88,18 @@ if ($opcion -eq "1") {
         continue main_loop
     }
 
-    Write-Host "`n= CARPETAS DISPONIBLES EN EL FTP =" -ForegroundColor Cyan
+    Write-Host "`n= SERVICIOS EN EL FTP =" 
     for ($i = 0; $i -lt $ftpFolders.Count; $i++) {
         Write-Host "$($i+1). $($ftpFolders[$i].Trim())"
     }
-    Write-Host "0. Regresar al menú principal"
-    $seleccion = Read-Host "Seleccione la carpeta a instalar (1-$($ftpFolders.Count)) o 0 para salir"
+    Write-Host "0. Regresar al menu"
+    $seleccion = Read-Host "Seleccione el servicio a instalar (1-$($ftpFolders.Count)) o 0 para salir"
     if ($seleccion -eq "0") {
-        Write-Host "Regresando..."
+        #Write-Host "Regresando..."
         continue main_loop
     } elseif ($seleccion -match "^\d+$" -and [int]$seleccion -le $ftpFolders.Count) {
         $carpetaSeleccionada = $ftpFolders[$seleccion - 1].Trim()
-        Write-Host "Selecciono la carpeta: $carpetaSeleccionada"
+        #Write-Host "Selecciono la carpeta: $carpetaSeleccionada"
 
         $ftpServer = "192.168.1.2"
         $ftpUser = "windows"
@@ -117,7 +117,7 @@ if ($opcion -eq "1") {
 
         # Construimos y mostramos la ruta que se va a usar
         $rutaFTP = "$selectedService/"
-        Write-Host "Ruta que se usara en la conexión FTP: $rutaFTP" -ForegroundColor Cyan
+        #Write-Host "Ruta que se usara en la conexión FTP: $rutaFTP" -ForegroundColor Cyan
 
         # Llamamos a la función con la ruta correcta
         $files = listar_http -ftpServer $ftpServer -ftpUser $ftpUser -ftpPass $ftpPass -directory $rutaFTP
@@ -151,18 +151,18 @@ if ($opcion -eq "1") {
             # Detecta Apache
             elseif ($file -match 'httpd-([0-9]+\.[0-9]+\.[0-9]+)') {
                 $version = $matches[1]
-                Write-Host "$index. Version LTS: $version"
+                Write-Host "$index. Version estable: $version"
             }
             else {
                 Write-Host "$index. $file"
             }
             $index++
         }
-        Write-Host "0. Regresar al menu principal"
+        Write-Host "0. Regresar al menu"
         do {
             $op2 = Read-Host "Elija la version que desea instalar (1-$($files.Count)), o escriba 0 para regresar"
             if ($op2 -eq "0") { 
-                Write-Host "Regresando ..." -ForegroundColor Yellow
+                #Write-Host "Regresando ..." -ForegroundColor Yellow
                 continue main_loop
             }
             if ($op2 -match "^\d+$" -and [int]$op2 -le $files.Count) {
@@ -174,7 +174,7 @@ if ($opcion -eq "1") {
 
         # Guardamos la versión seleccionada
         $selectedFile = $files[[int]$op2 - 1]
-        Write-Host "Selecciono la version: $selectedFile" -ForegroundColor Green
+        #Write-Host "Selecciono la version: $selectedFile" -ForegroundColor Green
 
         if ($carpetaSeleccionada -eq "Apache") {
             $port = solicitar_puerto "Ingresa el puerto:"

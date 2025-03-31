@@ -30,12 +30,12 @@ preguntar_ssl() {
 
 while true; do
     clear
-    echo "========== MENU PRINCIPAL =========="
+    echo "MENU"
     echo "1) Instalación por HTTP"
     echo "2) Instalación por FTP"
     echo "0) Salir"
-    echo "===================================="
-    read -p "Seleccione una opción: " opcion
+    #echo "===================================="
+    read -p "Seleccione una opcion: " opcion
 
     case $opcion in
         1)
@@ -125,20 +125,20 @@ while true; do
                 continue
             fi
 
-            echo "========== CARPETAS DISPONIBLES EN EL FTP =========="
+            echo "SERVICIOS FTP"
             for i in "${!carpetas[@]}"; do
                 echo "$((i + 1)). ${carpetas[$i]}"
             done
             echo "$(( ${#carpetas[@]} + 1 )). Regresar"
 
-            read -p "Selecciona la carpeta (1-${#carpetas[@]}): " carpeta_num
+            read -p "Seleccione un servicio (1-${#carpetas[@]}): " carpeta_num
             if ! [[ "$carpeta_num" =~ ^[0-9]+$ ]] || [ "$carpeta_num" -lt 1 ] || [ "$carpeta_num" -gt "${#carpetas[@]}" ]; then
-                echo "Regreando al menu principal..."
+                #echo "Regreando al menu principal..."
                 continue
             fi
 
             carpeta_seleccionada="${carpetas[$((carpeta_num - 1))]}"
-            echo "Seleccionaste la carpeta: $carpeta_seleccionada"
+            #echo "Seleccionaste la carpeta: $carpeta_seleccionada"
 
             archivos=()
             mapfile -t archivos < <(listar_archivos_ftp "$carpeta_seleccionada")
@@ -148,7 +148,7 @@ while true; do
                 exit 1
             fi
 
-            echo "========== ARCHIVOS DISPONIBLES EN '$carpeta_seleccionada' =========="
+            echo "VERSIONES DISPONIBLES EN '$carpeta_seleccionada'"
             for i in "${!archivos[@]}"; do
                 nombre="${archivos[$i]}"
 
@@ -156,7 +156,7 @@ while true; do
                     # Extraer solo la versión
                     if [[ $nombre =~ httpd-([0-9]+\.[0-9]+\.[0-9]+) ]]; then
                         version="${BASH_REMATCH[1]}"
-                        echo "$((i + 1)). Versión LTS: $version"
+                        echo "$((i + 1)). Versión estable: $version"
                     fi
 
                 elif [[ $carpeta_seleccionada == "Nginx" || $carpeta_seleccionada == "OpenLiteSpeed" ]]; then
@@ -166,7 +166,7 @@ while true; do
                         if [ "$i" -eq 0 ]; then
                             echo "$((i + 1)). Versión LTS: $version"
                         else
-                            echo "$((i + 1)). Versión Desarrollo: $version"
+                            echo "$((i + 1)). Versión en desarrollo: $version"
                         fi
                     else
                         echo "$((i + 1)). $nombre"
@@ -180,18 +180,18 @@ while true; do
             # Pedir selección de archivo solo por número
             read -p "Selecciona el archivo a descargar (1-${#archivos[@]}): " archivo_num
             if ! [[ "$archivo_num" =~ ^[0-9]+$ ]] || [ "$archivo_num" -lt 1 ] || [ "$archivo_num" -gt "${#archivos[@]}" ]; then
-                echo "Regresando al menu principal..."
+                echo "Regresando al menu principal"
                 continue
             fi
 
             archivo_seleccionado="${archivos[$((archivo_num - 1))]}"
-            echo "Seleccionaste el archivo: $archivo_seleccionado"
+            #echo "Seleccionaste el archivo: $archivo_seleccionado"
             descargar_y_descomprimir "$carpeta_seleccionada" "$archivo_seleccionado"
 
             if [[ "$carpeta_seleccionada" == "Apache" ]]; then
                 if [[ $archivo_seleccionado =~ httpd-([0-9]+\.[0-9]+\.[0-9]+) ]]; then
                     version_apache="${BASH_REMATCH[1]}"
-                    echo "Versión detectada de Apache: $version_apache"
+                    #echo "Versión detectada de Apache: $version_apache"
                 else
                     echo "No se pudo obtener la versión de Apache"
                     exit 1
@@ -213,7 +213,7 @@ while true; do
             elif [[ "$carpeta_seleccionada" == "Nginx" ]]; then
                 if [[ $archivo_seleccionado =~ nginx-([0-9]+\.[0-9]+\.[0-9]+) ]]; then
                     version_nginx="${BASH_REMATCH[1]}"
-                    echo "Versión detectada de NGINX: $version_nginx"
+                    echo #"Versión detectada de NGINX: $version_nginx"
                 else
                     echo "No se pudo obtener la versión de NGINX"
                     exit 1
@@ -232,7 +232,7 @@ while true; do
             elif [[ "$carpeta_seleccionada" == "OpenLiteSpeed" ]]; then
                 if [[ $archivo_seleccionado =~ openlitespeed-([0-9]+\.[0-9]+\.[0-9]+) ]]; then
                     version_openlitespeed="${BASH_REMATCH[1]}"
-                    echo "Versión detectada de OpenLiteSpeed: $version_openlitespeed"
+                    #echo "Versión detectada de OpenLiteSpeed: $version_openlitespeed"
                 else
                     echo "No se pudo obtener la versión de OpenLiteSpeed"
                     exit 1
@@ -257,15 +257,15 @@ while true; do
             fi
 
 
-            read -p "Presiona Enter para volver al menú..."
+            read -p "Enter para volver"
             ;;
         0)
-            echo "Saliendo..."
+            #echo "Saliendo..."
             exit 0
             ;;
         *)
             echo "Opción inválida, intenta de nuevo."
-            read -p "Presiona Enter para continuar..."
+            read -p "Enter para continuar"
             ;;
     esac
 done

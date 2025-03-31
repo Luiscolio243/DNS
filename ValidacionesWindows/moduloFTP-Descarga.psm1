@@ -9,7 +9,7 @@ function DescargarYDescomprimir {
 
     # Armamos la URL completa del FTP
     $URL_FTP = "ftp://$ftpServer/$carpetaSeleccionada/$selectedFile"
-    Write-Host "Descargando desde: $URL_FTP" -ForegroundColor Cyan
+    #Write-Host "Descargando desde: $URL_FTP" -ForegroundColor Cyan
 
     # Creamos el objeto WebClient con credenciales
     $ClienteWeb = New-Object System.Net.WebClient
@@ -21,13 +21,13 @@ function DescargarYDescomprimir {
         $RutaDestino = "C:\Apache24"
         # Descargamos
         $ClienteWeb.DownloadFile($URL_FTP, $zipPath)
-        Write-Host "Archivo Apache descargado en: $zipPath" -ForegroundColor Green
+        #Write-Host "Archivo Apache descargado en: $zipPath" -ForegroundColor Green
         # Descomprimimos
         Expand-Archive -Path $zipPath -DestinationPath $RutaDestino -Force
-        Write-Host "Apache descomprimido en: $RutaDestino" -ForegroundColor Green
+        #Write-Host "Apache descomprimido en: $RutaDestino" -ForegroundColor Green
         $subfolder = Get-ChildItem -Path $RutaDestino | Where-Object { $_.PSIsContainer } | Select-Object -First 1
         if ($subfolder) {
-            Write-Host "Moviendo contenido de $($subfolder.Name) a $RutaDestino" -ForegroundColor Yellow
+            #Write-Host "Moviendo contenido de $($subfolder.Name) a $RutaDestino" -ForegroundColor Yellow
             Move-Item -Path "$RutaDestino\$($subfolder.Name)\*" -Destination $RutaDestino -Force
             Remove-Item -Path "$RutaDestino\$($subfolder.Name)" -Recurse -Force
         }
@@ -38,23 +38,23 @@ function DescargarYDescomprimir {
         $RutaDestino = "C:\"
         # Descargamos
         $ClienteWeb.DownloadFile($URL_FTP, $zipPath)
-        Write-Host "Archivo Nginx descargado en: $zipPath" -ForegroundColor Green
+        #Write-Host "Archivo Nginx descargado en: $zipPath" -ForegroundColor Green
         # Descomprimimos
         Expand-Archive -Path $zipPath -DestinationPath $RutaDestino -Force
         # Buscar la carpeta descomprimida (ej: nginx-1.26.3)
         $nginxFolder = Get-ChildItem -Path $RutaDestino -Directory | Where-Object { $_.Name -like "nginx*" } | Select-Object -First 1
 
         if ($nginxFolder) {
-            Write-Host "Se encontró la carpeta descomprimida: $($nginxFolder.Name)" -ForegroundColor Green
+            #Write-Host "Se encontró la carpeta descomprimida: $($nginxFolder.Name)" -ForegroundColor Green
             # Renombrar a C:\nginx
             Rename-Item -Path "$RutaDestino\$($nginxFolder.Name)" -NewName "nginx" -Force
-            Write-Host "Nginx descomprimido y renombrado a C:\nginx" -ForegroundColor Green
+            #Write-Host "Nginx descomprimido y renombrado a C:\nginx" -ForegroundColor Green
         } else {
             Write-Host "No se encontró la carpeta descomprimida de NGINX" -ForegroundColor Red
             return
         }
 
-        # ✅ Ahora la ruta final siempre será C:\nginx
+        #Ahora la ruta final siempre será C:\nginx
         $RutaNginx = "C:\nginx"
     }
     else {
@@ -75,7 +75,7 @@ function Configurar-Apache {
         $configFile = Join-Path $RutaDestino "conf\httpd.conf"
         if (Test-Path $configFile) {
             (Get-Content $configFile) -replace "Listen 80", "Listen $Port" | Set-Content $configFile
-            Write-Host "Puerto actualizado a $Port en httpd.conf" -ForegroundColor Green
+            #Write-Host "Puerto actualizado a $Port en httpd.conf" -ForegroundColor Green
         } else {
             Write-Host "No se encontró $configFile" -ForegroundColor Red
             return
@@ -86,7 +86,7 @@ function Configurar-Apache {
         if ($apacheExe) {
             Start-Process -FilePath $apacheExe.FullName -ArgumentList '-k', 'install', '-n', 'Apache24' -NoNewWindow -Wait
             Start-Service -Name "Apache24"
-            Write-Host "Apache instalado y corriendo en el puerto $Port" -ForegroundColor Green
+            #Write-Host "Apache instalado y corriendo en el puerto $Port" -ForegroundColor Green
             New-NetFirewallRule -DisplayName "Abrir Puerto $Port Apache" -Direction Inbound -Protocol TCP -LocalPort $Port -Action Allow
         } else {
             Write-Host "No se encontró httpd.exe" -ForegroundColor Red
@@ -109,13 +109,13 @@ function Configurar-Apache {
             $certFolder = Join-Path $RutaDestino "Certificados"
             if (-not (Test-Path $certFolder)) {
                 New-Item -Path $certFolder -ItemType Directory
-                Write-Host "Carpeta 'Certificados' creada."
+                #Write-Host "Carpeta 'Certificados' creada."
             }
 
             # Generar certificado y clave
             & openssl genrsa -out "$certFolder\apache.key" 2048
             & openssl req -new -x509 -key "$certFolder\apache.key" -out "$certFolder\apache.crt" -days 365 -subj "/CN=192.168.1.11"
-            Write-Host "Certificado SSL generado."
+            #Write-Host "Certificado SSL generado."
 
             # Crear httpd-ssl.conf
             $sslContent = @"
@@ -139,7 +139,7 @@ function Configurar-Apache {
 "@
 
             Set-Content -Path "$RutaDestino\conf\extra\httpd-ssl.conf" -Value $sslContent
-            Write-Host "Archivo httpd-ssl.conf generado." -ForegroundColor Green
+            #Write-Host "Archivo httpd-ssl.conf generado." -ForegroundColor Green
 
             # Habilitar módulos SSL en httpd.conf
             (Get-Content $configFile) -replace '#LoadModule ssl_module modules/mod_ssl.so', 'LoadModule ssl_module modules/mod_ssl.so' | Set-Content $configFile
@@ -191,7 +191,7 @@ function Configurar-Nginx {
 
         # Ejecutar NGINX
         Start-Process -FilePath "$RutaNginx\nginx.exe" -WorkingDirectory $RutaNginx
-        Write-Host "NGINX iniciado correctamente." -ForegroundColor Green
+        #Write-Host "NGINX iniciado correctamente." -ForegroundColor Green
 
         # Abrir el puerto en firewall
         New-NetFirewallRule -DisplayName "Nginx $Port" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $Port
@@ -209,13 +209,13 @@ function Configurar-Nginx {
             $sslPath = "$RutaNginx\ssl"
             if (!(Test-Path $sslPath)) {
                 New-Item -Path $sslPath -ItemType Directory
-                Write-Host "Carpeta SSL creada en $sslPath"
+                #Write-Host "Carpeta SSL creada en $sslPath"
             }
 
             # Generar certificado
             & openssl genrsa -out "$sslPath\nginx.key" 2048
             & openssl req -new -x509 -key "$sslPath\nginx.key" -out "$sslPath\nginx.crt" -days 365 -subj "/CN=192.168.1.11"
-            Write-Host "Certificado SSL generado" -ForegroundColor Green
+            #Write-Host "Certificado SSL generado" -ForegroundColor Green
 
             ## Ahora se sobreescribe el nginx.conf CON EL FORMATO CORRECTO y en la carpeta correcta
         $nginxConfPath = "C:\nginx\conf\nginx.conf"
@@ -349,14 +349,14 @@ http {
 
         # Sobrescribir con codificación UTF8 sin BOM
         [System.IO.File]::WriteAllText($nginxConfPath, $nginxContent, (New-Object System.Text.UTF8Encoding($false)))
-        Write-Host "nginx.conf sobreescrito con SSL y configurado correctamente" -ForegroundColor Green
+        #Write-Host "nginx.conf sobreescrito con SSL y configurado correctamente" -ForegroundColor Green
 
         # Añadir bloque SSL (lo agrega al final de nginx.conf)
         #Add-Content -Path "C:\nginx\conf\nginx.conf" -Value $sslBlock
-        Write-Host "Bloque SSL agregado a nginx.conf"
+        #Write-Host "Bloque SSL agregado a nginx.conf"
 
         # Verificar configuración de NGINX
-        Write-Host "Verificando configuración NGINX..."
+        #Write-Host "Verificando configuración NGINX..."
         cd C:\nginx
         .\nginx.exe -t
         .\nginx.exe -s reload
