@@ -9,14 +9,19 @@ function Validar-Contrasena {
             continue
         }
 
-        if ($Password.Length -lt 3 -or $Password.Length -gt 14) {
-            Write-Host "Error: La contraseña debe tener entre 3 y 14 caracteres." -ForegroundColor Red
+        if ($Password.Length -lt 8 -or $Password.Length -gt 14) {
+            Write-Host "Error: La contraseña debe tener entre 8 y 14 caracteres." -ForegroundColor Red
+            continue
+        }
+
+        if ($Password -match [regex]::Escape($NombreUsuario)) {
+            Write-Host "Error: La contraseña no puede contener el nombre de usuario." -ForegroundColor Red
             continue
         }
 
         # Verifica los requisitos de la contraseña
         $TieneNumero = $Password -cmatch "\d"  # Requiere al menos un número
-        $TieneEspecial = $Password -cmatch "[!@+#$%^&*(),.?""{}|<>]"  # Requiere un carácter especial
+        $TieneEspecial = $Password -cmatch "[!@#$%^&*(),.?""{}|<>]"  # Requiere un carácter especial
         $TieneMayuscula = $Password -cmatch "[A-Z]"
         $TieneMinuscula = $Password -cmatch "[a-z]"
 
