@@ -86,7 +86,7 @@ function restriccion_horarios(){
 
 function restriccion_archivos(){
     $sharePath = "C:\Profiles\"
-    $serverName = "WIN-GI55G3AQCRC"  
+    $serverName = "WIN-EMVKRM56JFS"  
     $shareName = "Profiles"
 
     $gpo1 = Get-GPO -Name $global:gpoTam1 -ErrorAction SilentlyContinue
@@ -147,7 +147,7 @@ function restriccion_archivos(){
 
     if (-Not (Get-SmbShare -Name $shareName -ErrorAction SilentlyContinue)) {
         New-SmbShare -Path $sharePath -Name $shareName 
-        Grant-SmbShareAccess -Name $shareName -AccountName 'Everyone' -AccessRight Full -Force
+        Grant-SmbShareAccess -Name $shareName -AccountName Todos -AccessRight Full -Force
         Write-Host "Recurso compartido creado"
     } else {
         Write-Host "El recurso compartido '$shareName' ya existe."
